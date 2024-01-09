@@ -19,8 +19,6 @@
 
 #define ENEMY_MAX (3)
 #define ENEMY_SHOT_MAX (16)
-#define FOR_EACH_ENEMY(enm) enm = enemies; for (int i = ENEMY_MAX; i; i--, enm++)
-#define FOR_EACH_ENEMY_SHOT(sht) sht = enemy_shots; for (int i = ENEMY_SHOT_MAX; i; i--, sht++)
 	
 #define POWERUP_BASE_TILE (100)
 #define POWERUP_LIGHTINING_TILE (POWERUP_BASE_TILE)
@@ -32,7 +30,6 @@
 #define POWERUP_WIND (3)
 
 #define POWERUP_MAX (3)
-#define FOR_EACH_POWERUP(pwr) pwr = powerups; for (int i = POWERUP_MAX; i; i--, pwr++)
 
 #define TIMER_MAX (60)
 #define BOSS_TIMER (30)
@@ -225,7 +222,7 @@ void init_enemies() {
 	enemy_spawner.delay = 0;
 	enemy_spawner.next = 0;
 	
-	FOR_EACH_ENEMY(enm) {
+	FOR_EACH(enm, enemies) {
 		enm->active = 0;
 	}
 }
@@ -250,7 +247,7 @@ void handle_enemies() {
 	}
 	
 	enemy_spawner.all_dead = 1;
-	FOR_EACH_ENEMY(enm) {
+	FOR_EACH(enm, enemies) {
 		move_actor(enm);
 		
 		if (enm->x < -32 || enm->x > 287 || enm->y < -16 || enm->y > 192) {
@@ -283,7 +280,7 @@ void handle_enemies() {
 void draw_enemies() {
 	static actor *enm;
 	
-	FOR_EACH_ENEMY(enm) {
+	FOR_EACH(enm, enemies) {
 		draw_actor(enm);
 	}
 }
@@ -312,7 +309,7 @@ void init_powerups() {
 	init_actor(icons, 256 - 32 - 8, 8, 2, 1, POWERUP_LIGHTINING_TILE, 1);	
 	init_actor(icons + 1, 256 - 16 - 8, 8, 2, 1, POWERUP_FIRE_TILE, 1);	
 
-	FOR_EACH_POWERUP(pwr) {
+	FOR_EACH(pwr, powerups) {
 		init_actor(pwr, 0, 0, 2, 1, POWERUP_LIGHTINING_TILE, 2);
 		pwr->active = 0;
 	}
@@ -344,13 +341,13 @@ void spawn_powerup(char x, char type) {
 	static actor *pwr, *selected;
 
 	selected = 0;
-	FOR_EACH_POWERUP(pwr) {
+	FOR_EACH(pwr, powerups) {
 		if (!pwr->active) selected = pwr;
 	}
 	
 	if (!selected) {
 		selected = pwr;
-		FOR_EACH_POWERUP(pwr) {
+		FOR_EACH(pwr, powerups) {
 			if (pwr->y > selected->y) selected = pwr;
 		}		
 	}
@@ -367,7 +364,7 @@ void spawn_powerup(char x, char type) {
 void handle_powerups() {
 	static actor *pwr;
 
-	FOR_EACH_POWERUP(pwr) {	
+	FOR_EACH(pwr, powerups) {	
 		pwr->y++;
 		if (pwr->y > SCREEN_H) pwr->active = 0;
 
@@ -408,7 +405,7 @@ void draw_powerups() {
 	draw_actor(icons);
 	draw_actor(icons + 1);		
 
-	FOR_EACH_POWERUP(pwr) {	
+	FOR_EACH(pwr, powerups) {	
 		draw_actor(pwr);
 	}
 }
@@ -458,7 +455,7 @@ void clear_tilemap() {
 void init_enemy_shots() {
 	static actor *sht;
 	
-	FOR_EACH_ENEMY_SHOT(sht) {
+	FOR_EACH(sht, enemy_shots) {
 		sht->active = 0;
 	}
 }
@@ -466,7 +463,7 @@ void init_enemy_shots() {
 void handle_enemy_shots() {
 	static actor *sht;
 	
-	FOR_EACH_ENEMY_SHOT(sht) {
+	FOR_EACH(sht, enemy_shots) {
 		if (sht->active) {
 			move_actor(sht);
 			if (sht->y < 0 || sht->y > (SCREEN_H - 16)) sht->active = 0;
@@ -478,7 +475,7 @@ void handle_enemy_shots() {
 void draw_enemy_shots() {
 	static actor *sht;
 	
-	FOR_EACH_ENEMY_SHOT(sht) {
+	FOR_EACH(sht, enemy_shots) {
 		draw_actor(sht);
 	}
 }
@@ -494,7 +491,7 @@ char fire_enemy_shot(int x, int y, char shot_type) {
 	shots_to_fire = info->length;
 	fired = 0;
 	
-	FOR_EACH_ENEMY_SHOT(sht) {
+	FOR_EACH(sht, enemy_shots) {
 		if (!sht->active) {
 			init_actor(sht, 
 				x + path->x, y + path->y, 

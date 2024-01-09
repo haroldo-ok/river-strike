@@ -12,7 +12,15 @@
 #define PATH_FLIP_Y (0x02)
 #define PATH_2X_SPEED (0x04)
 
-
+// Based on https://stackoverflow.com/a/400970/679240
+#define FOR_EACH(item, array) \
+    for(int keep = 1, \
+            count = 0,\
+            size = sizeof (array) / sizeof *(array); \
+        keep && count != size; \
+        keep = !keep, count++) \
+      for(item = (array) + count; keep; keep = !keep)
+		  
 typedef union _fixed {
   struct {
     unsigned char l;

@@ -16,9 +16,6 @@
 #define PLAYER_BOTTOM (SCREEN_H - 16)
 #define PLAYER_SPEED (3)
 
-#define ENEMY_MAX (3)
-#define ENEMY_SHOT_MAX (16)
-	
 #define POWERUP_BASE_TILE (100)
 #define POWERUP_LIGHTINING_TILE (POWERUP_BASE_TILE)
 #define POWERUP_FIRE_TILE (POWERUP_BASE_TILE + 8)
@@ -33,8 +30,6 @@
 #define TIMER_MAX (60)
 
 actor player;
-actor enemies[ENEMY_MAX];
-actor enemy_shots[ENEMY_SHOT_MAX];
 actor icons[2];
 actor powerups[POWERUP_MAX];
 actor timer_label;
@@ -53,16 +48,6 @@ struct ply_ctl {
 
 	char death_delay;
 } ply_ctl;
-
-struct enemy_spawner {
-	char type;
-	char x;
-	char flags;
-	char delay;
-	char next;
-	path_step *path;
-	char all_dead;
-} enemy_spawner;
 
 char timer_delay;
 char frames_elapsed;
@@ -179,86 +164,6 @@ char is_colliding_against_player(actor *_act) {
 	}
 	
 	return 0;
-}
-
-void create_enemy_spawner(char x) {
-	enemy_spawner.type = rand() & 1;
-	enemy_spawner.x = x;
-	enemy_spawner.flags = 0;
-	enemy_spawner.path = (path_step *) path1_path;
-	if (enemy_spawner.x > 124) {
-		enemy_spawner.flags |= PATH_FLIP_X;
-	}
-}
-
-void init_enemies() {
-	static actor *enm;
-
-	enemy_spawner.x = 0;	
-	enemy_spawner.delay = 0;
-	enemy_spawner.next = 0;
-	
-	FOR_EACH(enm, enemies) {
-		enm->active = 0;
-	}
-}
-
-void handle_enemies() {
-	static actor *enm, *sht;	
-	
-	if (!enemy_spawner.x) return;
-	
-	if (enemy_spawner.delay) {
-		enemy_spawner.delay--;
-	} else if (enemy_spawner.next != ENEMY_MAX) {		
-		enm = enemies + enemy_spawner.next;
-		
-		init_actor(enm, enemy_spawner.x, 0, 2, 1, 66, 1);
-		enm->path_flags = enemy_spawner.flags;
-		enm->path = enemy_spawner.path;
-		enm->state = enemy_spawner.type;
-
-		enemy_spawner.delay = 10;
-		enemy_spawner.next++;
-	}
-	
-	enemy_spawner.all_dead = 1;
-	FOR_EACH(enm, enemies) {
-		move_actor(enm);
-		
-		if (enm->x < -32 || enm->x > 287 || enm->y < -16 || enm->y > 192) {
-			enm->active = 0;
-		}
-
-		if (enm->active) {
-			sht = check_collision_against_shots(enm);
-			if (sht) {
-				update_score(enm, sht);
-				sht->active = 0;
-				enm->active = 0;
-			}
-			
-			if (!ply_ctl.death_delay && is_colliding_against_player(enm)) {
-				enm->active = 0;
-				ply_ctl.death_delay = 60;
-			}
-		}
-		
-		if (enm->active) enemy_spawner.all_dead = 0;
-	}	
-	
-	if (enemy_spawner.all_dead) {
-		enemy_spawner.x = 0;
-		enemy_spawner.next = 0;
-	}
-}
-
-void draw_enemies() {
-	static actor *enm;
-	
-	FOR_EACH(enm, enemies) {
-		draw_actor(enm);
-	}
 }
 
 void draw_background() {
@@ -428,39 +333,6 @@ void clear_tilemap() {
 	}
 }
 
-void init_enemy_shots() {
-	static actor *sht;
-	
-	FOR_EACH(sht, enemy_shots) {
-		sht->active = 0;
-	}
-}
-
-void handle_enemy_shots() {
-	static actor *sht;
-	
-	FOR_EACH(sht, enemy_shots) {
-		if (sht->active) {
-			move_actor(sht);
-			if (sht->y < 0 || sht->y > (SCREEN_H - 16)) sht->active = 0;
-			if (sht->state == 1 && !sht->state_timer) sht->active = 0;
-		}
-	}
-}
-
-void draw_enemy_shots() {
-	static actor *sht;
-	
-	FOR_EACH(sht, enemy_shots) {
-		draw_actor(sht);
-	}
-}
-
-char fire_enemy_shot(int x, int y, char shot_type) {
-	// TODO: Delete this
-	return 0;
-}
-
 void interrupt_handler() {
 	PSGFrame();
 	PSGSFXFrame();
@@ -496,28 +368,22 @@ void gameplay_loop() {
 	ply_ctl.powerup2_active = 0;
 	ply_ctl.death_delay = 0;
 	
-	init_enemies();
 	init_player_shots();
-	init_enemy_shots();
 	init_powerups();
 	init_score();
 	
 	while (timer.value) {	
 		handle_player_input();
-		handle_enemies();
 		handle_icons();
 		handle_powerups();
 		handle_player_shots();
-		handle_enemy_shots();
 		handle_score();
 		
 		SMS_initSprites();
 
 		draw_player();
-		draw_enemies();
 		draw_powerups();
 		draw_player_shots();
-		draw_enemy_shots();
 		draw_score();
 		
 		SMS_finalizeSprites();
@@ -542,7 +408,6 @@ void timeover_sequence() {
 		if (!(timeover_delay & 0x10)) draw_actor(&time_over);
 		
 		draw_player();
-		draw_enemies();
 		draw_player_shots();
 		draw_score();
 		

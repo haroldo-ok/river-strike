@@ -719,9 +719,7 @@ void main() {
 }
 
 SMS_EMBED_SEGA_ROM_HEADER(9999,0); // code 9999 hopefully free, here this means 'homebrew'
-SMS_EMBED_SDSC_HEADER(0,11, 2022,07,27, "Haroldo-OK\\2022", "Dragon Blaster",
-  "A dragon-themed shoot-em-up.\n"
-  "Originally made for the SHMUP JAM 1 - Dragons - https://itch.io/jam/shmup-jam-1-dragons\n"
-  "Enhanced for SMS Power! Competition 2022 - https://www.smspower.org/forums/18879-Competitions2022DeadlineIs27thMarch\n"
-  "Further Enhanced for Improve My Game Jam 22 - https://itch.io/jam/improve-my-game-jam-22\n"
+SMS_EMBED_SDSC_HEADER(0,1, 2024,1,8, "Haroldo-OK\\2024", "River Strike",
+  "A River Raid Clone.\n"
+  "Originally made for the Minigame a Month - JANUARY 2024 - Water - https://itch.io/jam/minigame-a-month-january-2024\n"
   "Built using devkitSMS & SMSlib - https://github.com/sverx/devkitSMS");

@@ -5,7 +5,6 @@
 #include "lib/PSGlib.h"
 #include "actor.h"
 #include "map.h"
-#include "score.h"
 #include "data.h"
 
 #define PLAYER_TOP (0)
@@ -14,20 +13,12 @@
 #define PLAYER_BOTTOM (SCREEN_H - 16)
 #define PLAYER_SPEED (3)
 
-#define TIMER_MAX (60)
-
 actor player;
-actor timer_label;
-actor time_over;
-
-score_display timer;
-score_display score;
 
 struct ply_ctl {
 	char death_delay;
 } ply_ctl;
 
-char timer_delay;
 char frames_elapsed;
 
 void load_standard_palettes() {
@@ -35,8 +26,6 @@ void load_standard_palettes() {
 	SMS_loadSpritePalette(sprites_palette_bin);
 	SMS_setSpritePaletteColor(0, 0);
 }
-
-void update_score(actor *enm, actor *sht);
 
 void wait_button_press() {
 	do {
@@ -106,41 +95,6 @@ void draw_background() {
 	}
 }
 
-void update_score(actor *enm, actor *sht) {
-	increment_score_display(&score, 5);
-}
-
-void init_score() {
-	init_actor(&timer_label, 16, 8, 1, 1, 178, 1);
-	init_score_display(&timer, 24, 8, 236);
-	update_score_display(&timer, TIMER_MAX);
-	timer_delay = 60;
-	frames_elapsed = 0;
-	
-	init_score_display(&score, 16, 24, 236);
-}
-
-void handle_score() {
-	if (timer_delay) {
-		timer_delay--;
-	} else {
-		if (timer.value) {
-			char decrement = frames_elapsed / 60;
-			if (decrement > timer.value) decrement = timer.value;
-			increment_score_display(&timer, -decrement);
-		}
-		timer_delay = 60;
-		frames_elapsed = 0;
-	}
-}
-
-void draw_score() {
-	draw_actor(&timer_label);
-	draw_score_display(&timer);
-
-	draw_score_display(&score);
-}
-
 void clear_tilemap() {
 	SMS_setNextTileatXY(0, 0);
 	for (int i = (SCREEN_CHAR_W * SCROLL_CHAR_H); i; i--) {
@@ -177,16 +131,12 @@ void gameplay_loop() {
 	player.animation_delay = 20;
 	ply_ctl.death_delay = 0;
 	
-	init_score();
-	
-	while (timer.value) {	
+	while (1) {	
 		handle_player_input();
-		handle_score();
 		
 		SMS_initSprites();
 
 		draw_player();
-		draw_score();
 		
 		SMS_finalizeSprites();
 		SMS_waitForVBlank();
@@ -198,40 +148,9 @@ void gameplay_loop() {
 	}
 }
 
-void timeover_sequence() {
-	char timeover_delay = 128;
-	char pressed_button = 0;
-	
-	init_actor(&time_over, 107, 64, 6, 1, 180, 1);
-
-	while (timeover_delay || !pressed_button) {
-		SMS_initSprites();
-
-		if (!(timeover_delay & 0x10)) draw_actor(&time_over);
-		
-		draw_player();
-		draw_score();
-		
-		SMS_finalizeSprites();
-		SMS_waitForVBlank();
-		SMS_copySpritestoSAT();
-		
-		draw_map();
-		
-		if (timeover_delay) {
-			timeover_delay--;
-		} else {
-			pressed_button = SMS_getKeysStatus() & (PORT_A_KEY_1 | PORT_A_KEY_2);
-		}
-	}
-	
-	wait_button_release();
-}
-
 void main() {	
 	while (1) {
 		gameplay_loop();
-		timeover_sequence();
 	}
 }
 

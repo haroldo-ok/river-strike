@@ -5,7 +5,6 @@
 #include "lib/PSGlib.h"
 #include "actor.h"
 #include "shot.h"
-#include "boss_shot.h"
 #include "shots.h"
 #include "map.h"
 #include "score.h"
@@ -32,7 +31,6 @@
 #define POWERUP_MAX (3)
 
 #define TIMER_MAX (60)
-#define BOSS_TIMER (30)
 
 actor player;
 actor enemies[ENEMY_MAX];
@@ -55,16 +53,6 @@ struct ply_ctl {
 
 	char death_delay;
 } ply_ctl;
-
-struct boss {
-	char loaded;
-	int x, y;
-	int next_x, next_y;
-	char move_delay;
-	char shot_delay;
-	char shot_type;
-	char shot_type_delay;
-} boss;
 
 struct enemy_spawner {
 	char type;
@@ -171,18 +159,6 @@ void handle_player_input() {
 		}
 	}
 	
-	if (joy & PORT_A_KEY_1) {
-		if (!ply_ctl.pressed_shot_selection && ply_ctl.powerup2) {
-			switch_powerup();
-			ply_ctl.pressed_shot_selection = 1;
-		}
-	} else {
-		ply_ctl.pressed_shot_selection = 0;
-	}
-	
-	if (ply_ctl.shot_delay) ply_ctl.shot_delay--;
-	if (ply_ctl.death_delay) ply_ctl.death_delay--;
-
 }
 
 void draw_player() {
@@ -481,121 +457,8 @@ void draw_enemy_shots() {
 }
 
 char fire_enemy_shot(int x, int y, char shot_type) {
-	static actor *sht;
-	static char shots_to_fire, fired;
-	static shot_info *info;
-	static path *path;
-	
-	info = boss_shot_infos + shot_type;
-	path = info->paths;
-	shots_to_fire = info->length;
-	fired = 0;
-	
-	FOR_EACH(sht, enemy_shots) {
-		if (!sht->active) {
-			init_actor(sht, 
-				x + path->x, y + path->y, 
-				1, 1, 
-				info->base_tile, info->frame_count);
-				
-			sht->path = path->steps;
-			sht->path_flags = path->flags;
-			sht->state = 1;
-			sht->state_timer = info->life_time;
-						
-			// Fired something
-			fired = 1;
-			path++;
-			shots_to_fire--;
-			if (!shots_to_fire)	return 1;
-		}
-	}
-
-	// Didn't fire anything
-	return fired;
-}
-
-void init_boss() {
-	SMS_loadPSGaidencompressedTiles(dracolich_tiles_psgcompr, 256);	
-	SMS_loadBGPalette(dracolich_palette_bin);
-	SMS_setSpritePaletteColor(0, 0);
-	SMS_setBGPaletteColor(0, 0);
-
-	clear_tilemap();
-	SMS_setBGScrollX(0);
-	SMS_setBGScrollY(0);
-
-	// Draws the boss.
-	unsigned int *t = dracolich_tilemap_bin;
-	for (char y = 0; y != 16; y++) {
-		SMS_setNextTileatXY(0, y);
-		for (char x = 0; x != 12; x++) {
-			SMS_setTile(*t + 256);
-			t++;
-		}
-	}
-
-	boss.x = 128 - 96 / 2;
-	boss.y = 0;
-	boss.next_x = boss.x;
-	boss.next_y = boss.y;
-	boss.move_delay = 0;
-	boss.loaded = 1;
-	boss.shot_delay = 0;
-	boss.shot_type = 1;
-	boss.shot_type_delay = 0;
-
-	SMS_setBGScrollX(boss.x);
-	SMS_setBGScrollY(boss.y);
-}
-
-void handle_boss() {
-	if (!boss.loaded) return;
-	
-	if (boss.move_delay) {
-		// Wait
-		boss.move_delay--;
-	} else if (boss.x != boss.next_x || boss.y != boss.next_y) {
-		// Move towards target
-		
-		if (boss.x < boss.next_x) {
-			boss.x++;
-		} else if (boss.x > boss.next_x) {
-			boss.x--;
-		}
-
-		if (boss.y < boss.next_y) {
-			boss.y++;
-		} else if (boss.y > boss.next_y) {
-			boss.y--;
-		}
-	} else {
-		// Select movement target
-		boss.next_x = rand() % (SCREEN_W - 96);
-		boss.next_y = rand() % (SCREEN_H - 128);
-		boss.move_delay = 30 + rand() % 20;
-	}
-
-	if (boss.shot_type_delay) {
-		boss.shot_type_delay--;
-	} else {
-		boss.shot_type = (boss.shot_type + 1) % BOSS_SHOT_TYPE_COUNT;
-		boss.shot_type_delay = 128 + (rand() & 0x1F);
-	}
-		
-	if (boss.shot_delay) {
-		boss.shot_delay--;
-	} else {
-		if (fire_enemy_shot(boss.x + 44, boss.y + 32, boss.shot_type)) {
-			boss.shot_delay = boss_shot_infos[boss.shot_type].firing_delay;
-		}
-	}
-}
-void draw_boss() {
-	if (!boss.loaded) return;
-	
-	SMS_setBGScrollX(boss.x);
-	SMS_setBGScrollY(SCROLL_H - boss.y);
+	// TODO: Delete this
+	return 0;
 }
 
 void interrupt_handler() {
@@ -633,8 +496,6 @@ void gameplay_loop() {
 	ply_ctl.powerup2_active = 0;
 	ply_ctl.death_delay = 0;
 	
-	boss.loaded = 0;
-
 	init_enemies();
 	init_player_shots();
 	init_enemy_shots();
@@ -644,7 +505,6 @@ void gameplay_loop() {
 	while (timer.value) {	
 		handle_player_input();
 		handle_enemies();
-		handle_boss();
 		handle_icons();
 		handle_powerups();
 		handle_player_shots();
@@ -655,7 +515,6 @@ void gameplay_loop() {
 
 		draw_player();
 		draw_enemies();
-		draw_boss();
 		draw_powerups();
 		draw_player_shots();
 		draw_enemy_shots();
@@ -665,14 +524,9 @@ void gameplay_loop() {
 		SMS_waitForVBlank();
 		SMS_copySpritestoSAT();
 		
-		if (boss.loaded) {
-		} else {
-			// Scroll two lines per frame
-			draw_map();		
-			draw_map();
-			
-			if (timer.value < BOSS_TIMER)  init_boss();
-		}
+		// Scroll two lines per frame
+		draw_map();		
+		draw_map();
 	}
 }
 

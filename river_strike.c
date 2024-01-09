@@ -4,8 +4,6 @@
 #include "lib/SMSlib.h"
 #include "lib/PSGlib.h"
 #include "actor.h"
-#include "shot.h"
-#include "shots.h"
 #include "map.h"
 #include "score.h"
 #include "data.h"
@@ -16,22 +14,9 @@
 #define PLAYER_BOTTOM (SCREEN_H - 16)
 #define PLAYER_SPEED (3)
 
-#define POWERUP_BASE_TILE (100)
-#define POWERUP_LIGHTINING_TILE (POWERUP_BASE_TILE)
-#define POWERUP_FIRE_TILE (POWERUP_BASE_TILE + 8)
-#define POWERUP_WIND_TILE (POWERUP_BASE_TILE + 16)
-#define POWERUP_NONE_TILE (POWERUP_BASE_TILE + 24)
-#define POWERUP_LIGHTINING (1)
-#define POWERUP_FIRE (2)
-#define POWERUP_WIND (3)
-
-#define POWERUP_MAX (3)
-
 #define TIMER_MAX (60)
 
 actor player;
-actor icons[2];
-actor powerups[POWERUP_MAX];
 actor timer_label;
 actor time_over;
 
@@ -39,13 +24,6 @@ score_display timer;
 score_display score;
 
 struct ply_ctl {
-	char shot_delay;
-	char shot_type;
-	char pressed_shot_selection;
-	
-	char powerup1, powerup2;
-	char powerup1_active, powerup2_active;
-
 	char death_delay;
 } ply_ctl;
 
@@ -72,54 +50,6 @@ void wait_button_release() {
 	} while (SMS_getKeysStatus() & (PORT_A_KEY_1 | PORT_A_KEY_2));
 }
 
-void select_combined_powerup() {
-	switch (ply_ctl.powerup1) {
-	case POWERUP_LIGHTINING:
-		switch (ply_ctl.powerup2) {
-		case POWERUP_LIGHTINING: ply_ctl.shot_type = 3; break; // Thunderstrike
-		case POWERUP_FIRE: ply_ctl.shot_type = 6; break; // Firebolt
-		case POWERUP_WIND: ply_ctl.shot_type = 7; break; // Thunderstorm
-		}
-		break;
-	
-	case POWERUP_FIRE:
-		switch (ply_ctl.powerup2) {
-		case POWERUP_LIGHTINING: ply_ctl.shot_type = 6; break; // Firebolt
-		case POWERUP_FIRE: ply_ctl.shot_type = 4; break; // Hellfire
-		case POWERUP_WIND: ply_ctl.shot_type = 8; break; // Firestorm
-		}
-		break;
-
-	case POWERUP_WIND:
-		switch (ply_ctl.powerup2) {
-		case POWERUP_LIGHTINING: ply_ctl.shot_type = 7; break; // Thunderstorm
-		case POWERUP_FIRE: ply_ctl.shot_type = 8; break; // Firestorm
-		case POWERUP_WIND: ply_ctl.shot_type = 5; break; // Tempest
-		}
-		break;
-
-	}
-}
-
-void switch_powerup() {
-	if (ply_ctl.powerup1_active && ply_ctl.powerup2_active) {
-		// Only the first powerup will be active
-		ply_ctl.powerup1_active = 1;
-		ply_ctl.powerup2_active = 0;
-		ply_ctl.shot_type = ply_ctl.powerup1 - 1;
-	} else if (ply_ctl.powerup1_active) {
-		// Only the second powerup will be active
-		ply_ctl.powerup1_active = 0;
-		ply_ctl.powerup2_active = 1;
-		ply_ctl.shot_type = ply_ctl.powerup2 - 1;
-	} else {
-		// Both powerups will be active
-		ply_ctl.powerup1_active = 1;
-		ply_ctl.powerup2_active = 1;
-		select_combined_powerup();
-	}
-}
-
 void handle_player_input() {
 	static unsigned char joy;	
 	joy = SMS_getKeysStatus();
@@ -134,14 +64,6 @@ void handle_player_input() {
 		if (player.y > PLAYER_TOP) player.y -= PLAYER_SPEED;
 	} else if (joy & PORT_A_KEY_DOWN) {
 		if (player.y < PLAYER_BOTTOM) player.y += PLAYER_SPEED;
-	}
-	
-	if (joy & PORT_A_KEY_2) {
-		if (!ply_ctl.shot_delay) {
-			if (fire_player_shot(&player, ply_ctl.shot_type)) {
-				ply_ctl.shot_delay = player_shot_infos[ply_ctl.shot_type].firing_delay;
-			}
-		}
 	}
 	
 }
@@ -181,113 +103,6 @@ void draw_background() {
 			SMS_setTile(tile_number);
 			ch++;
 		}
-	}
-}
-
-void init_powerups() {
-	static actor *pwr;
-
-	init_actor(icons, 256 - 32 - 8, 8, 2, 1, POWERUP_LIGHTINING_TILE, 1);	
-	init_actor(icons + 1, 256 - 16 - 8, 8, 2, 1, POWERUP_FIRE_TILE, 1);	
-
-	FOR_EACH(pwr, powerups) {
-		init_actor(pwr, 0, 0, 2, 1, POWERUP_LIGHTINING_TILE, 2);
-		pwr->active = 0;
-	}
-}
-
-char powerup_base_tile(char type) {
-	switch (type) {
-	case POWERUP_LIGHTINING: return POWERUP_LIGHTINING_TILE;
-	case POWERUP_FIRE: return POWERUP_FIRE_TILE;
-	case POWERUP_WIND: return POWERUP_WIND_TILE;
-	}
-	
-	return POWERUP_NONE_TILE;
-}
-
-void handle_icons() {
-	static int tile;
-	
-	tile = powerup_base_tile(ply_ctl.powerup1);
-	if (!ply_ctl.powerup1_active) tile += 4;
-	icons[0].base_tile = tile;
-	
-	tile = powerup_base_tile(ply_ctl.powerup2);
-	if (ply_ctl.powerup2 && !ply_ctl.powerup2_active) tile += 4;
-	icons[1].base_tile = tile;
-}
-
-void spawn_powerup(char x, char type) {
-	static actor *pwr, *selected;
-
-	selected = 0;
-	FOR_EACH(pwr, powerups) {
-		if (!pwr->active) selected = pwr;
-	}
-	
-	if (!selected) {
-		selected = pwr;
-		FOR_EACH(pwr, powerups) {
-			if (pwr->y > selected->y) selected = pwr;
-		}		
-	}
-
-	if (selected) {
-		selected->x = x;
-		selected->y = -16;
-		selected->active = 1;
-		selected->state = type;
-		selected->base_tile = powerup_base_tile(selected->state);
-	}
-}
-
-void handle_powerups() {
-	static actor *pwr;
-
-	FOR_EACH(pwr, powerups) {	
-		pwr->y++;
-		if (pwr->y > SCREEN_H) pwr->active = 0;
-
-		if (pwr->active) {
-			// Check collision with player
-			if (pwr->x > player.x - 16 && pwr->x < player.x + 24 &&
-				pwr->y > player.y - 16 && pwr->y < player.y + 16) {
-				update_score(pwr, 0);
-
-				if (!ply_ctl.powerup2) {
-					// Second is absent
-					ply_ctl.powerup2 = pwr->state;
-				} else  if (!ply_ctl.powerup1_active) {
-					// First is inactive
-					ply_ctl.powerup1 = pwr->state;
-				} else if (!ply_ctl.powerup2_active) {
-					// Second is inactive
-					ply_ctl.powerup2 = pwr->state;
-				} else {
-					// Both are active
-					ply_ctl.powerup1 = ply_ctl.powerup2;
-					ply_ctl.powerup2 = pwr->state;				
-				}
-				
-				ply_ctl.powerup1_active = 1;
-				ply_ctl.powerup2_active = 1;
-				select_combined_powerup();
-				
-				pwr->active = 0;			
-			}
-		}	
-	}
-}
-
-void draw_powerups() {
-	static actor *pwr;
-
-	draw_actor(icons);
-	draw_actor(icons + 1);		
-
-	FOR_EACH(pwr, powerups) {	
-		draw_actor(pwr);
 	}
 }
 
@@ -360,30 +175,17 @@ void gameplay_loop() {
 	
 	init_actor(&player, 116, PLAYER_BOTTOM - 16, 3, 1, 2, 4);
 	player.animation_delay = 20;
-	ply_ctl.shot_delay = 0;
-	ply_ctl.shot_type = 0;
-	ply_ctl.powerup1 = 1;
-	ply_ctl.powerup2 = 0;
-	ply_ctl.powerup1_active = 1;
-	ply_ctl.powerup2_active = 0;
 	ply_ctl.death_delay = 0;
 	
-	init_player_shots();
-	init_powerups();
 	init_score();
 	
 	while (timer.value) {	
 		handle_player_input();
-		handle_icons();
-		handle_powerups();
-		handle_player_shots();
 		handle_score();
 		
 		SMS_initSprites();
 
 		draw_player();
-		draw_powerups();
-		draw_player_shots();
 		draw_score();
 		
 		SMS_finalizeSprites();
@@ -408,7 +210,6 @@ void timeover_sequence() {
 		if (!(timeover_delay & 0x10)) draw_actor(&time_over);
 		
 		draw_player();
-		draw_player_shots();
 		draw_score();
 		
 		SMS_finalizeSprites();

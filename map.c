@@ -22,43 +22,16 @@ void init_map(void *level_data) {
 	map_data.scroll_y = 0;
 }
 
-void decompress_map_row(char *buffer) {
+void generate_map_row(char *buffer) {
 	static char *o, *d;
 	static char remaining, ch, repeat, pos;
 	
-	o = map_data.next_row;
 	d = buffer;
 	for (remaining = 16; remaining; ) {
-		ch = *o;
-		o++;
-		
-		if (ch & 0x80) {
-			// Has repeat flag: repeat n times
-			repeat = ch & 0x7F;
-			ch = *o;
-			o++;
-			
-			for (; repeat && remaining; repeat--, remaining--) {
-				*d = ch;
-				d++;
-			}
-		} else if (ch & 0x40) {
-			// Is a sprite declaration
-			pos = (ch & 0x1F) << 4;
-			ch = *o;
-			o++;
-			
-			if (ch < 25) {
-				// create_enemy_spawner(pos);
-			} else {
-				// spawn_powerup(pos, 1 + ((ch - 25) >> 1));
-			}
-		} else {
-			// Just use the char
-			*d = ch;
-			d++;
-			remaining--;
-		}
+		ch = (remaining & 1) ? 4 : 17;
+		*d = ch;
+		d++;
+		remaining--;
 	}
 	
 	map_data.next_row = o;
@@ -71,7 +44,7 @@ void draw_map_row() {
 	static unsigned int base_tile, tile;
 	static char buffer[16];
 
-	decompress_map_row(buffer);
+	generate_map_row(buffer);
 
 	for (i = 2, y = map_data.background_y, base_tile = 256; i; i--, y++, base_tile++) {
 		SMS_setNextTileatXY(0, y);

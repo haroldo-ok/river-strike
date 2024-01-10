@@ -12,6 +12,9 @@ struct map_data {
 	char background_y;
 	char lines_before_next;
 	char scroll_y;
+	
+	char stream_x;
+	char stream_w;
 } map_data;
 
 void init_map(void *level_data) {
@@ -20,6 +23,9 @@ void init_map(void *level_data) {
 	map_data.background_y = SCROLL_CHAR_H - 2;
 	map_data.lines_before_next = 0;
 	map_data.scroll_y = 0;
+	
+	map_data.stream_x = 7;
+	map_data.stream_w = 2;
 }
 
 void generate_map_row(char *buffer) {
@@ -27,14 +33,30 @@ void generate_map_row(char *buffer) {
 	static char remaining, ch, repeat, pos;
 	
 	d = buffer;
-	for (remaining = 16; remaining; ) {
-		ch = (remaining & 1) ? 4 : 17;
-		*d = ch;
+	for (remaining = 16; remaining; remaining--) {
+		*d = 17;
 		d++;
-		remaining--;
 	}
 	
-	map_data.next_row = o;
+	d = buffer + map_data.stream_x;
+	for (remaining = map_data.stream_w; remaining; remaining--) {
+		*d = 4;
+		d++;
+	}
+	
+	if (!(rand() & 0x03)) {
+		if (rand() & 1) {
+			map_data.stream_w--;
+		} else {
+			map_data.stream_w++;
+		}
+		
+		if (map_data.stream_w < 2) {
+			map_data.stream_w = 2;
+		} else if (map_data.stream_w > 6) {
+			map_data.stream_w = 6;
+		}
+	}
 }
 
 void draw_map_row() {

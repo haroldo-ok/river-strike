@@ -57,6 +57,20 @@ void generate_map_row(char *buffer) {
 			map_data.stream_w = 6;
 		}
 	}
+
+	if (!(rand() & 0x03)) {
+		if (rand() & 1) {
+			map_data.stream_x--;
+		} else {
+			map_data.stream_x++;
+		}
+		
+		if (map_data.stream_x < 1) {
+			map_data.stream_x = 1;
+		} else if (map_data.stream_x > SCREEN_CHAR_W - 8) {
+			map_data.stream_x = SCREEN_CHAR_W - 8;
+		}
+	}
 }
 
 void draw_map_row() {

@@ -10,15 +10,18 @@
 #define STREAM_MIN_W (2)
 #define STREAM_MAX_W (6)
 
+typedef struct river_stream {
+	char x, w;
+} river_stream;
+
 struct map_data {
 	char *level_data;
 	char *next_row;
 	char background_y;
 	char lines_before_next;
 	char scroll_y;
-	
-	char stream_x;
-	char stream_w;
+
+	river_stream stream1;
 } map_data;
 
 void init_map(void *level_data) {
@@ -28,8 +31,8 @@ void init_map(void *level_data) {
 	map_data.lines_before_next = 0;
 	map_data.scroll_y = 0;
 	
-	map_data.stream_x = 7;
-	map_data.stream_w = STREAM_MIN_W;
+	map_data.stream1.x = 7;
+	map_data.stream1.w = STREAM_MIN_W;
 }
 
 void generate_map_row(char *buffer) {
@@ -42,38 +45,38 @@ void generate_map_row(char *buffer) {
 		d++;
 	}
 	
-	d = buffer + map_data.stream_x;
-	for (remaining = map_data.stream_w; remaining; remaining--) {
+	d = buffer + map_data.stream1.x;
+	for (remaining = map_data.stream1.w; remaining; remaining--) {
 		*d = 4;
 		d++;
 	}
 
 	if (!(rand() & 0x03)) {
 		if (rand() & 0x80) {
-			map_data.stream_w--;
+			map_data.stream1.w--;
 		} else {
-			map_data.stream_w++;
+			map_data.stream1.w++;
 		}
 		
-		if (map_data.stream_w < STREAM_MIN_W) {
-			map_data.stream_w = STREAM_MIN_W;
-		} else if (map_data.stream_w > STREAM_MAX_W) {
-			map_data.stream_w = STREAM_MAX_W;
+		if (map_data.stream1.w < STREAM_MIN_W) {
+			map_data.stream1.w = STREAM_MIN_W;
+		} else if (map_data.stream1.w > STREAM_MAX_W) {
+			map_data.stream1.w = STREAM_MAX_W;
 		}
 	}
 
-	if (map_data.stream_w > STREAM_MIN_W && !(rand() & 0x03)) {
+	if (map_data.stream1.w > STREAM_MIN_W && !(rand() & 0x03)) {
 		if (rand() & 0x80) {
-			map_data.stream_x--;
+			map_data.stream1.x--;
 		} else {
-			map_data.stream_x++;
+			map_data.stream1.x++;
 		}		
 	}
 
-	if (map_data.stream_x < 1) {
-		map_data.stream_x = 1;
-	} else if (map_data.stream_x + map_data.stream_w > MAP_W - 1) {
-		map_data.stream_x = MAP_W - map_data.stream_w - 1;
+	if (map_data.stream1.x < 1) {
+		map_data.stream1.x = 1;
+	} else if (map_data.stream1.x + map_data.stream1.w > MAP_W - 1) {
+		map_data.stream1.x = MAP_W - map_data.stream1.w - 1;
 	}
 }
 

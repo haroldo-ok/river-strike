@@ -8,7 +8,7 @@
 
 #define MAP_W (16)
 #define STREAM_MIN_W (2)
-#define STREAM_MAX_W (6)
+#define STREAM_MAX_W (5)
 
 typedef struct river_stream {
 	char x, w;
@@ -21,7 +21,7 @@ struct map_data {
 	char lines_before_next;
 	char scroll_y;
 
-	river_stream stream1;
+	river_stream stream1, stream2;
 } map_data;
 
 void init_map(void *level_data) {
@@ -33,6 +33,47 @@ void init_map(void *level_data) {
 	
 	map_data.stream1.x = 7;
 	map_data.stream1.w = STREAM_MIN_W;
+	map_data.stream2.x = 7;
+	map_data.stream2.w = STREAM_MIN_W;
+}
+
+void update_river_stream(char *buffer, river_stream *stream) {
+	static char *d;
+	static char remaining;
+
+	d = buffer + stream->x;
+	for (remaining = stream->w; remaining; remaining--) {
+		*d = 4;
+		d++;
+	}
+
+	if (!(rand() & 0x03)) {
+		if (rand() & 0x80) {
+			stream->w--;
+		} else {
+			stream->w++;
+		}
+		
+		if (stream->w < STREAM_MIN_W) {
+			stream->w = STREAM_MIN_W;
+		} else if (stream->w > STREAM_MAX_W) {
+			stream->w = STREAM_MAX_W;
+		}
+	}
+
+	if (stream->w > STREAM_MIN_W && !(rand() & 0x03)) {
+		if (rand() & 0x80) {
+			stream->x--;
+		} else {
+			stream->x++;
+		}		
+	}
+
+	if (stream->x < 1) {
+		stream->x = 1;
+	} else if (stream->x + stream->w > MAP_W - 1) {
+		stream->x = MAP_W - stream->w - 1;
+	}
 }
 
 void generate_map_row(char *buffer) {
@@ -45,39 +86,8 @@ void generate_map_row(char *buffer) {
 		d++;
 	}
 	
-	d = buffer + map_data.stream1.x;
-	for (remaining = map_data.stream1.w; remaining; remaining--) {
-		*d = 4;
-		d++;
-	}
-
-	if (!(rand() & 0x03)) {
-		if (rand() & 0x80) {
-			map_data.stream1.w--;
-		} else {
-			map_data.stream1.w++;
-		}
-		
-		if (map_data.stream1.w < STREAM_MIN_W) {
-			map_data.stream1.w = STREAM_MIN_W;
-		} else if (map_data.stream1.w > STREAM_MAX_W) {
-			map_data.stream1.w = STREAM_MAX_W;
-		}
-	}
-
-	if (map_data.stream1.w > STREAM_MIN_W && !(rand() & 0x03)) {
-		if (rand() & 0x80) {
-			map_data.stream1.x--;
-		} else {
-			map_data.stream1.x++;
-		}		
-	}
-
-	if (map_data.stream1.x < 1) {
-		map_data.stream1.x = 1;
-	} else if (map_data.stream1.x + map_data.stream1.w > MAP_W - 1) {
-		map_data.stream1.x = MAP_W - map_data.stream1.w - 1;
-	}
+	update_river_stream(buffer, &map_data.stream1);
+	update_river_stream(buffer, &map_data.stream2);
 }
 
 void draw_map_row() {

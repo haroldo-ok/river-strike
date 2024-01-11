@@ -6,6 +6,10 @@
 #include "actor.h"
 #include "map.h"
 
+#define MAP_W (16)
+#define STREAM_MIN_W (2)
+#define STREAM_MAX_W (6)
+
 struct map_data {
 	char *level_data;
 	char *next_row;
@@ -25,7 +29,7 @@ void init_map(void *level_data) {
 	map_data.scroll_y = 0;
 	
 	map_data.stream_x = 7;
-	map_data.stream_w = 2;
+	map_data.stream_w = STREAM_MIN_W;
 }
 
 void generate_map_row(char *buffer) {
@@ -33,7 +37,7 @@ void generate_map_row(char *buffer) {
 	static char remaining, ch, repeat, pos;
 	
 	d = buffer;
-	for (remaining = 16; remaining; remaining--) {
+	for (remaining = MAP_W; remaining; remaining--) {
 		*d = 17;
 		d++;
 	}
@@ -43,33 +47,33 @@ void generate_map_row(char *buffer) {
 		*d = 4;
 		d++;
 	}
-	
+
 	if (!(rand() & 0x03)) {
-		if (rand() & 1) {
+		if (rand() & 0x80) {
 			map_data.stream_w--;
 		} else {
 			map_data.stream_w++;
 		}
 		
-		if (map_data.stream_w < 2) {
-			map_data.stream_w = 2;
-		} else if (map_data.stream_w > 6) {
-			map_data.stream_w = 6;
+		if (map_data.stream_w < STREAM_MIN_W) {
+			map_data.stream_w = STREAM_MIN_W;
+		} else if (map_data.stream_w > STREAM_MAX_W) {
+			map_data.stream_w = STREAM_MAX_W;
 		}
 	}
 
-	if (!(rand() & 0x03)) {
-		if (rand() & 1) {
+	if (map_data.stream_w > STREAM_MIN_W && !(rand() & 0x03)) {
+		if (rand() & 0x80) {
 			map_data.stream_x--;
 		} else {
 			map_data.stream_x++;
-		}
-		
-		if (map_data.stream_x < 1) {
-			map_data.stream_x = 1;
-		} else if (map_data.stream_x > SCREEN_CHAR_W - 8) {
-			map_data.stream_x = SCREEN_CHAR_W - 8;
-		}
+		}		
+	}
+
+	if (map_data.stream_x < 1) {
+		map_data.stream_x = 1;
+	} else if (map_data.stream_x + map_data.stream_w > MAP_W - 1) {
+		map_data.stream_x = MAP_W - map_data.stream_w - 1;
 	}
 }
 

@@ -6,12 +6,24 @@
 #include "actor.h"
 #include "map.h"
 
+#define MAP_W (16)
+#define STREAM_MIN_W (2)
+#define STREAM_MAX_W (5)
+#define TILE_WATER (4)
+#define TILE_LAND (17)
+
+typedef struct river_stream {
+	char x, w;
+} river_stream;
+
 struct map_data {
 	char *level_data;
 	char *next_row;
 	char background_y;
 	char lines_before_next;
 	char scroll_y;
+
+	river_stream stream1, stream2;
 } map_data;
 
 void init_map(void *level_data) {
@@ -20,48 +32,81 @@ void init_map(void *level_data) {
 	map_data.background_y = SCROLL_CHAR_H - 2;
 	map_data.lines_before_next = 0;
 	map_data.scroll_y = 0;
+	
+	map_data.stream1.x = 7;
+	map_data.stream1.w = STREAM_MIN_W;
+	map_data.stream2.x = 7;
+	map_data.stream2.w = STREAM_MIN_W;
 }
 
-void decompress_map_row(char *buffer) {
-	static char *o, *d;
-	static char remaining, ch, repeat, pos;
-	
-	o = map_data.next_row;
-	d = buffer;
-	for (remaining = 16; remaining; ) {
-		ch = *o;
-		o++;
-		
-		if (ch & 0x80) {
-			// Has repeat flag: repeat n times
-			repeat = ch & 0x7F;
-			ch = *o;
-			o++;
-			
-			for (; repeat && remaining; repeat--, remaining--) {
-				*d = ch;
-				d++;
-			}
-		} else if (ch & 0x40) {
-			// Is a sprite declaration
-			pos = (ch & 0x1F) << 4;
-			ch = *o;
-			o++;
-			
-			if (ch < 25) {
-				// create_enemy_spawner(pos);
-			} else {
-				// spawn_powerup(pos, 1 + ((ch - 25) >> 1));
-			}
+void update_river_stream(char *buffer, river_stream *stream) {
+	static char *d;
+	static char remaining;
+
+	// Fill the stream area with water tiles
+	d = buffer + stream->x;
+	for (remaining = stream->w; remaining; remaining--) {
+		*d = TILE_WATER;
+		d++;
+	}
+
+	// Update width
+	if (!(rand() & 0x03)) {
+		if (rand() & 0x80) {
+			stream->w--;
 		} else {
-			// Just use the char
-			*d = ch;
-			d++;
-			remaining--;
+			stream->w++;
+		}
+		
+		if (stream->w < STREAM_MIN_W) {
+			stream->w = STREAM_MIN_W;
+		} else if (stream->w > STREAM_MAX_W) {
+			stream->w = STREAM_MAX_W;
 		}
 	}
+
+	// Update X coord
+	if (stream->w > STREAM_MIN_W && !(rand() & 0x03)) {
+		if (rand() & 0x80) {
+			stream->x--;
+		} else {
+			stream->x++;
+		}		
+	}
+
+	if (stream->x < 1) {
+		stream->x = 1;
+	} else if (stream->x + stream->w > MAP_W - 1) {
+		stream->x = MAP_W - stream->w - 1;
+	}
+}
+
+void generate_map_row(char *buffer) {
+	static char *o, *d, *prev, *next;
+	static char remaining, ch, repeat, pos;
 	
-	map_data.next_row = o;
+	// Fill the row with land tiles
+	d = buffer;
+	for (remaining = MAP_W; remaining; remaining--) {
+		*d = TILE_LAND;
+		d++;
+	}
+	
+	update_river_stream(buffer, &map_data.stream1);
+	update_river_stream(buffer, &map_data.stream2);
+	
+	prev = buffer;
+	d = buffer + 1;
+	next = buffer + 2;
+	for (remaining = MAP_W - 2; remaining; remaining--) {
+		// Handle vertical edges
+		if (*prev == TILE_LAND && *d == TILE_WATER) *prev = 18;
+		if (*d == TILE_WATER && *next == TILE_LAND) *next = 16;
+
+		prev++;
+		d++;
+		next++;
+	}
 }
 
 void draw_map_row() {
@@ -71,7 +116,7 @@ void draw_map_row() {
 	static unsigned int base_tile, tile;
 	static char buffer[16];
 
-	decompress_map_row(buffer);
+	generate_map_row(buffer);
 
 	for (i = 2, y = map_data.background_y, base_tile = 256; i; i--, y++, base_tile++) {
 		SMS_setNextTileatXY(0, y);

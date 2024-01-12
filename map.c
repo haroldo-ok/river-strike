@@ -9,6 +9,8 @@
 #define MAP_W (16)
 #define STREAM_MIN_W (2)
 #define STREAM_MAX_W (5)
+#define TILE_WATER (4)
+#define TILE_LAND (17)
 
 typedef struct river_stream {
 	char x, w;
@@ -41,12 +43,14 @@ void update_river_stream(char *buffer, river_stream *stream) {
 	static char *d;
 	static char remaining;
 
+	// Fill the stream area with water tiles
 	d = buffer + stream->x;
 	for (remaining = stream->w; remaining; remaining--) {
-		*d = 4;
+		*d = TILE_WATER;
 		d++;
 	}
 
+	// Update width
 	if (!(rand() & 0x03)) {
 		if (rand() & 0x80) {
 			stream->w--;
@@ -61,6 +65,7 @@ void update_river_stream(char *buffer, river_stream *stream) {
 		}
 	}
 
+	// Update X coord
 	if (stream->w > STREAM_MIN_W && !(rand() & 0x03)) {
 		if (rand() & 0x80) {
 			stream->x--;
@@ -77,17 +82,31 @@ void update_river_stream(char *buffer, river_stream *stream) {
 }
 
 void generate_map_row(char *buffer) {
-	static char *o, *d;
+	static char *o, *d, *prev, *next;
 	static char remaining, ch, repeat, pos;
 	
+	// Fill the row with land tiles
 	d = buffer;
 	for (remaining = MAP_W; remaining; remaining--) {
-		*d = 17;
+		*d = TILE_LAND;
 		d++;
 	}
 	
 	update_river_stream(buffer, &map_data.stream1);
 	update_river_stream(buffer, &map_data.stream2);
+	
+	prev = buffer;
+	d = buffer + 1;
+	next = buffer + 2;
+	for (remaining = MAP_W - 2; remaining; remaining--) {
+		// Handle vertical edges
+		if (*prev == TILE_LAND && *d == TILE_WATER) *prev = 18;
+		if (*d == TILE_WATER && *next == TILE_LAND) *next = 16;
+
+		prev++;
+		d++;
+		next++;
+	}
 }
 
 void draw_map_row() {

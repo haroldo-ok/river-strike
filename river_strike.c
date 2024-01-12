@@ -155,7 +155,7 @@ void main() {
 }
 
 SMS_EMBED_SEGA_ROM_HEADER(9999,0); // code 9999 hopefully free, here this means 'homebrew'
-SMS_EMBED_SDSC_HEADER(0,1, 2024,1,8, "Haroldo-OK\\2024", "River Strike",
+SMS_EMBED_SDSC_HEADER(0,1, 2024,1,12, "Haroldo-OK\\2024", "River Strike",
   "A River Raid Clone.\n"
   "Originally made for the Minigame a Month - JANUARY 2024 - Water - https://itch.io/jam/minigame-a-month-january-2024\n"
   "Built using devkitSMS & SMSlib - https://github.com/sverx/devkitSMS");

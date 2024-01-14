@@ -40,6 +40,12 @@ void init_map(void *level_data) {
 	map_data.stream2.w = STREAM_MIN_W;
 }
 
+void get_margins(char *left, char *right, char x, char y) {
+	// TODO: Implement actual collision scanning
+	*left = 8;
+	*right = 248;
+}
+
 void update_river_stream(char *buffer, river_stream *stream) {
 	static char *d;
 	static char remaining;

@@ -108,6 +108,15 @@ void interrupt_handler() {
 	frames_elapsed++;
 }
 
+void draw_collision() {
+	static char left, right;
+	
+	get_margins(&left, &right, player.x, player.y);
+		
+	SMS_addSprite(left, player.y, 16);
+	SMS_addSprite(right - 8, player.y, 16);
+}
+
 void gameplay_loop() {	
 	SMS_useFirstHalfTilesforSprites(1);
 	SMS_setSpriteMode(SPRITEMODE_TALL);
@@ -137,6 +146,7 @@ void gameplay_loop() {
 		SMS_initSprites();
 
 		draw_player();
+		draw_collision();
 		
 		SMS_finalizeSprites();
 		SMS_waitForVBlank();
@@ -144,7 +154,7 @@ void gameplay_loop() {
 		
 		// Scroll two lines per frame
 		draw_map();		
-		draw_map();
+		draw_map();		
 	}
 }
 

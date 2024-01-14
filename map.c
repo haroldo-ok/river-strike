@@ -44,9 +44,9 @@ void get_margins(char *left, char *right, char x, char y) {
 	static char bg_x, bg_y;
 	static char *row_data;
 
-	bg_y = map_data.background_y + (y >> 4) + 1;
+	bg_y = map_data.background_y + (y >> 3);
 	if (bg_y > SCROLL_CHAR_H) bg_y -= SCROLL_CHAR_H;
-	row_data = map_data.circular_buffer[bg_y];
+	row_data = map_data.circular_buffer[bg_y >> 1];
 
 	for (bg_x = (x >> 4); bg_x && row_data[bg_x] == TILE_WATER; bg_x--);
 	*left = (bg_x << 4);
@@ -132,7 +132,7 @@ void draw_map_row() {
 	static unsigned int base_tile, tile;
 	static char *buffer;
 	
-	buffer = map_data.circular_buffer[map_data.background_y];
+	buffer = map_data.circular_buffer[map_data.background_y >> 1];
 
 	generate_map_row(buffer);
 

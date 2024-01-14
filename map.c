@@ -41,9 +41,18 @@ void init_map(void *level_data) {
 }
 
 void get_margins(char *left, char *right, char x, char y) {
-	// TODO: Implement actual collision scanning
-	*left = 8;
-	*right = 248;
+	static char bg_x, bg_y;
+	static char *row_data;
+
+	bg_y = map_data.background_y + (y >> 4) + 1;
+	if (bg_y > SCROLL_CHAR_H) bg_y -= SCROLL_CHAR_H;
+	row_data = map_data.circular_buffer[bg_y];
+
+	for (bg_x = (x >> 4); bg_x && row_data[bg_x] == TILE_WATER; bg_x--);
+	*left = (bg_x << 4);
+
+	for (bg_x = (x >> 4); bg_x < 16 && row_data[bg_x] == TILE_WATER; bg_x++);
+	*right = (bg_x << 4);
 }
 
 void update_river_stream(char *buffer, river_stream *stream) {

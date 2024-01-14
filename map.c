@@ -24,6 +24,7 @@ struct map_data {
 	char scroll_y;
 
 	river_stream stream1, stream2;
+	char circular_buffer[SCROLL_CHAR_H][SCREEN_CHAR_W];
 } map_data;
 
 void init_map(void *level_data) {
@@ -114,7 +115,9 @@ void draw_map_row() {
 	static char y;
 	static char *map_char;
 	static unsigned int base_tile, tile;
-	static char buffer[16];
+	static char *buffer;
+	
+	buffer = map_data.circular_buffer[map_data.background_y];
 
 	generate_map_row(buffer);
 

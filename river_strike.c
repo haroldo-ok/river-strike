@@ -112,11 +112,18 @@ void interrupt_handler() {
 
 void draw_collision() {
 	static char left, right;
+	static char px;
 	
-	get_margins(&left, &right, player.x, player.y);
+	px = player.x + 8;
+	get_margins(&left, &right, px, player.y + 8);
 		
 	SMS_addSprite(left, player.y, 16);
 	SMS_addSprite(right - 8, player.y, 16);
+	
+	player.base_tile = PLAYER_NEUTRAL_TILE;
+	if (left < px && right - 8 < px || left > px && right - 8 > px) {
+		player.base_tile = PLAYER_CRASHING_TILE;
+	}
 }
 
 void gameplay_loop() {	
@@ -140,7 +147,7 @@ void gameplay_loop() {
 
 	SMS_displayOn();
 	
-	init_actor(&player, 116, PLAYER_BOTTOM - 16, 2, 1, PLAYER_CRASHING_TILE, 1);
+	init_actor(&player, 116, PLAYER_BOTTOM - 16, 2, 1, PLAYER_NEUTRAL_TILE, 1);
 	player.animation_delay = 20;
 	ply_ctl.death_delay = 0;
 	
@@ -149,8 +156,8 @@ void gameplay_loop() {
 		
 		SMS_initSprites();
 
-		draw_player();
 		draw_collision();
+		draw_player();
 		
 		SMS_finalizeSprites();
 		SMS_waitForVBlank();

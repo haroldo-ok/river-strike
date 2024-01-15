@@ -118,6 +118,8 @@ void draw_collision() {
 }
 
 void gameplay_loop() {	
+	srand(1234);
+
 	SMS_useFirstHalfTilesforSprites(1);
 	SMS_setSpriteMode(SPRITEMODE_TALL);
 	SMS_VDPturnOnFeature(VDPFEATURE_HIDEFIRSTCOL);
@@ -136,7 +138,7 @@ void gameplay_loop() {
 
 	SMS_displayOn();
 	
-	init_actor(&player, 116, PLAYER_BOTTOM - 16, 3, 2, 14, 1);
+	init_actor(&player, 116, PLAYER_BOTTOM - 16, 2, 1, 8, 1);
 	player.animation_delay = 20;
 	ply_ctl.death_delay = 0;
 	

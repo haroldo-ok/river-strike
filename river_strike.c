@@ -12,6 +12,8 @@
 #define PLAYER_RIGHT (256 - 16)
 #define PLAYER_BOTTOM (SCREEN_H - 16)
 #define PLAYER_SPEED (3)
+#define PLAYER_NEUTRAL_TILE (8)
+#define PLAYER_CRASHING_TILE (PLAYER_NEUTRAL_TILE + 64)
 
 actor player;
 
@@ -138,7 +140,7 @@ void gameplay_loop() {
 
 	SMS_displayOn();
 	
-	init_actor(&player, 116, PLAYER_BOTTOM - 16, 2, 1, 8, 1);
+	init_actor(&player, 116, PLAYER_BOTTOM - 16, 2, 1, PLAYER_CRASHING_TILE, 1);
 	player.animation_delay = 20;
 	ply_ctl.death_delay = 0;
 	

@@ -12,6 +12,8 @@
 #define PLAYER_RIGHT (256 - 16)
 #define PLAYER_BOTTOM (SCREEN_H - 16)
 #define PLAYER_SPEED (3)
+#define PLAYER_NEUTRAL_TILE (8)
+#define PLAYER_CRASHING_TILE (PLAYER_NEUTRAL_TILE + 64)
 
 actor player;
 
@@ -108,7 +110,25 @@ void interrupt_handler() {
 	frames_elapsed++;
 }
 
+void draw_collision() {
+	static char left, right;
+	static char px;
+	
+	px = player.x + 8;
+	get_margins(&left, &right, px, player.y + 8);
+		
+	SMS_addSprite(left, player.y, 16);
+	SMS_addSprite(right - 8, player.y, 16);
+	
+	player.base_tile = PLAYER_NEUTRAL_TILE;
+	if (left < px && right - 8 < px || left > px && right - 8 > px) {
+		player.base_tile = PLAYER_CRASHING_TILE;
+	}
+}
+
 void gameplay_loop() {	
+	srand(1234);
+
 	SMS_useFirstHalfTilesforSprites(1);
 	SMS_setSpriteMode(SPRITEMODE_TALL);
 	SMS_VDPturnOnFeature(VDPFEATURE_HIDEFIRSTCOL);
@@ -127,7 +147,7 @@ void gameplay_loop() {
 
 	SMS_displayOn();
 	
-	init_actor(&player, 116, PLAYER_BOTTOM - 16, 3, 2, 14, 1);
+	init_actor(&player, 116, PLAYER_BOTTOM - 16, 2, 1, PLAYER_NEUTRAL_TILE, 1);
 	player.animation_delay = 20;
 	ply_ctl.death_delay = 0;
 	
@@ -136,6 +156,7 @@ void gameplay_loop() {
 		
 		SMS_initSprites();
 
+		draw_collision();
 		draw_player();
 		
 		SMS_finalizeSprites();
@@ -144,7 +165,7 @@ void gameplay_loop() {
 		
 		// Scroll two lines per frame
 		draw_map();		
-		draw_map();
+		draw_map();		
 	}
 }
 

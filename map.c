@@ -24,6 +24,7 @@ struct map_data {
 	char scroll_y;
 
 	river_stream stream1, stream2;
+	char circular_buffer[SCROLL_CHAR_H][SCREEN_CHAR_W];
 } map_data;
 
 void init_map(void *level_data) {
@@ -37,6 +38,21 @@ void init_map(void *level_data) {
 	map_data.stream1.w = STREAM_MIN_W;
 	map_data.stream2.x = 7;
 	map_data.stream2.w = STREAM_MIN_W;
+}
+
+void get_margins(char *left, char *right, char x, char y) {
+	static char bg_x, bg_y;
+	static char *row_data;
+
+	bg_y = map_data.background_y + (y >> 3);
+	if (bg_y > SCROLL_CHAR_H) bg_y -= SCROLL_CHAR_H;
+	row_data = map_data.circular_buffer[bg_y >> 1];
+
+	for (bg_x = (x >> 4); bg_x && row_data[bg_x] == TILE_WATER; bg_x--);
+	*left = (bg_x << 4);
+
+	for (bg_x = (x >> 4); bg_x < 16 && row_data[bg_x] == TILE_WATER; bg_x++);
+	*right = (bg_x << 4);
 }
 
 void update_river_stream(char *buffer, river_stream *stream) {
@@ -114,7 +130,9 @@ void draw_map_row() {
 	static char y;
 	static char *map_char;
 	static unsigned int base_tile, tile;
-	static char buffer[16];
+	static char *buffer;
+	
+	buffer = map_data.circular_buffer[map_data.background_y >> 1];
 
 	generate_map_row(buffer);
 

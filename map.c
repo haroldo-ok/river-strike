@@ -27,6 +27,37 @@ struct map_data {
 	char circular_buffer[SCROLL_CHAR_H][SCREEN_CHAR_W];
 } map_data;
 
+actor enemies[8];
+
+void init_enemies() {
+	FOR_EACH(actor *enm, enemies) {
+		init_actor(enm, 0, 0, 2, 1, 8, 1);
+		enm->active = 0;
+	}
+}
+
+void move_enemies() {
+	FOR_EACH(actor *enm, enemies) {
+		if (enm->active) {
+			enm->y++;
+			if (enm->y > SCREEN_H) enm->active = 0;
+		}
+	}
+}
+
+void draw_enemies() {
+	FOR_EACH(actor *enm, enemies) {
+		draw_actor(enm);
+	}
+}
+
+actor* find_free_enemy() {
+	FOR_EACH(actor *enm, enemies) {
+		if (!enm->active) return enm;
+	}	
+	return 0;
+}
+
 void init_map(void *level_data) {
 	map_data.level_data = level_data;
 	map_data.next_row = level_data;
@@ -123,6 +154,16 @@ void generate_map_row(char *buffer) {
 		d++;
 		next++;
 	}
+	
+	if (!(rand() & 0x03)) {
+		actor *enm = find_free_enemy();
+		if (enm) {
+			switch (rand() & 0x03) {
+			default:
+				init_actor(enm, map_data.stream1.x << 4, 0, 4, 1, 130, 1);				
+			}
+		}
+	}
 }
 
 void draw_map_row() {
@@ -156,7 +197,7 @@ void draw_map_row() {
 	} else {
 		map_data.background_y = SCROLL_CHAR_H - 2;
 	}
-	map_data.lines_before_next = 15;
+	map_data.lines_before_next = 15;	
 }
 
 void draw_map_screen() {
@@ -181,4 +222,6 @@ void draw_map() {
 	} else {
 		map_data.scroll_y = SCROLL_H - 1;
 	}
+
+	move_enemies();
 }

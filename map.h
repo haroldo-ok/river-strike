@@ -7,4 +7,8 @@ void draw_map();
 
 void get_margins(char *left, char *right, char x, char y);
 
+void move_enemies();
+void draw_enemies();
+
+
 #endif /* MAP_H */

@@ -12,6 +12,10 @@
 #define TILE_WATER (4)
 #define TILE_LAND (17)
 
+#define ENEMY_TILE_SHIP (130)
+#define ENEMY_TILE_HELI (138)
+#define ENEMY_TILE_PLANE (144)
+
 typedef struct river_stream {
 	char x, w;
 } river_stream;
@@ -155,12 +159,23 @@ void generate_map_row(char *buffer) {
 		next++;
 	}
 	
-	if (!(rand() & 0x03)) {
+	if (!(rand() & 0x07)) {
 		actor *enm = find_free_enemy();
+		
 		if (enm) {
+			int enm_x = map_data.stream1.x << 4;
 			switch (rand() & 0x03) {
-			default:
-				init_actor(enm, map_data.stream1.x << 4, 0, 4, 1, 130, 1);				
+			case 0:
+				init_actor(enm, enm_x, 0, 4, 1, ENEMY_TILE_SHIP, 1);
+				break;
+				
+			case 1:
+				init_actor(enm, enm_x, 0, 3, 1, ENEMY_TILE_HELI, 1);
+				break;
+				
+			case 2:
+				init_actor(enm, enm_x, 0, 3, 1, ENEMY_TILE_PLANE, 1);
+				break;
 			}
 		}
 	}

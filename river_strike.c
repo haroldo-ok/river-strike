@@ -158,6 +158,7 @@ void gameplay_loop() {
 
 		draw_collision();
 		draw_player();
+		draw_enemies();
 		
 		SMS_finalizeSprites();
 		SMS_waitForVBlank();

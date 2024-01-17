@@ -6,4 +6,5 @@
 ## Art resources used on this project:
 
 * Background: https://opengameart.org/content/remastered-tyrian-graphics-0
-* Player ship: https://opengameart.org/content/vertical-shmup-set-2-m484-games
+* Player jet: https://opengameart.org/content/vertical-shmup-set-2-m484-games
+* Enemy ships and helicopters: https://opengameart.org/content/war-on-water-gfx

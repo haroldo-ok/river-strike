@@ -116,12 +116,14 @@ void draw_collision() {
 	
 	px = player.x + 8;
 	get_margins(&left, &right, px, player.y + 8);
-		
+	
+	/*	
 	SMS_addSprite(left, player.y, 16);
-	SMS_addSprite(right - 8, player.y, 16);
+	SMS_addSprite(right, player.y, 16);
+	*/
 	
 	player.base_tile = PLAYER_NEUTRAL_TILE;
-	if (left < px && right - 8 < px || left > px && right - 8 > px) {
+	if (left < px && right < px || left > px && right > px) {
 		player.base_tile = PLAYER_CRASHING_TILE;
 	}
 }

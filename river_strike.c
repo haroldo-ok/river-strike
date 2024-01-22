@@ -14,8 +14,8 @@
 #define PLAYER_SPEED (3)
 #define PLAYER_NEUTRAL_TILE (8)
 #define PLAYER_CRASHING_TILE (PLAYER_NEUTRAL_TILE + 64)
-#define PLAYER_DEATH_DELAY (60)
-#define PLAYER_CRASHING_COUNTDOWN (30)
+#define PLAYER_DEATH_DELAY (90)
+#define PLAYER_CRASHING_COUNTDOWN (60)
 
 actor player;
 
@@ -194,7 +194,7 @@ void main() {
 }
 
 SMS_EMBED_SEGA_ROM_HEADER(9999,0); // code 9999 hopefully free, here this means 'homebrew'
-SMS_EMBED_SDSC_HEADER(0,1, 2024,1,18, "Haroldo-OK\\2024", "River Strike (Initial prototype)",
+SMS_EMBED_SDSC_HEADER(0,2, 2024,1,22, "Haroldo-OK\\2024", "River Strike (Initial prototype)",
   "A River Raid Clone.\n"
   "Originally made for the Minigame a Month - JANUARY 2024 - Water - https://itch.io/jam/minigame-a-month-january-2024\n"
   "Built using devkitSMS & SMSlib - https://github.com/sverx/devkitSMS");

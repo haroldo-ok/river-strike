@@ -14,10 +14,13 @@
 #define PLAYER_SPEED (3)
 #define PLAYER_NEUTRAL_TILE (8)
 #define PLAYER_CRASHING_TILE (PLAYER_NEUTRAL_TILE + 64)
+#define PLAYER_DEATH_DELAY (60)
+#define PLAYER_CRASHING_COUNTDOWN (30)
 
 actor player;
 
 struct ply_ctl {
+	char crashing_countdown;
 	char death_delay;
 } ply_ctl;
 
@@ -57,6 +60,7 @@ void handle_player_input() {
 		if (player.y < PLAYER_BOTTOM) player.y += PLAYER_SPEED;
 	}
 	
+	if (ply_ctl.death_delay) ply_ctl.death_delay--;
 }
 
 void draw_player() {
@@ -125,6 +129,16 @@ void draw_collision() {
 	player.base_tile = PLAYER_NEUTRAL_TILE;
 	if (left < px && right < px || left > px && right > px) {
 		player.base_tile = PLAYER_CRASHING_TILE;
+		if (!ply_ctl.death_delay) {
+			if (ply_ctl.crashing_countdown) {
+				ply_ctl.crashing_countdown--;
+				if (!ply_ctl.death_delay) ply_ctl.death_delay = PLAYER_DEATH_DELAY;
+			} else {
+				ply_ctl.crashing_countdown = PLAYER_CRASHING_COUNTDOWN;
+			}
+		}
+	} else {
+		ply_ctl.crashing_countdown = 0;
 	}
 }
 
@@ -151,6 +165,7 @@ void gameplay_loop() {
 	
 	init_actor(&player, 116, PLAYER_BOTTOM - 16, 2, 1, PLAYER_NEUTRAL_TILE, 1);
 	player.animation_delay = 20;
+	ply_ctl.crashing_countdown = 0;
 	ply_ctl.death_delay = 0;
 	
 	while (1) {	

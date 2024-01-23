@@ -12,6 +12,9 @@
 #define PLAYER_RIGHT (256 - 16)
 #define PLAYER_BOTTOM (SCREEN_H - 16)
 #define PLAYER_SPEED (3)
+#define PLAYER_MIN_SPEED (0x080)
+#define PLAYER_MED_SPEED (0x100)
+#define PLAYER_MAX_SPEED (0x200)
 #define PLAYER_NEUTRAL_TILE (8)
 #define PLAYER_CRASHING_TILE (PLAYER_NEUTRAL_TILE + 64)
 #define PLAYER_DEATH_DELAY (90)
@@ -22,6 +25,7 @@ actor player;
 struct ply_ctl {
 	char crashing_countdown;
 	char death_delay;
+	fixed speed, displacement;
 } ply_ctl;
 
 char frames_elapsed;
@@ -54,10 +58,11 @@ void handle_player_input() {
 		if (player.x < PLAYER_RIGHT) player.x += PLAYER_SPEED;
 	}
 
+	ply_ctl.speed.w = PLAYER_MED_SPEED;
 	if (joy & PORT_A_KEY_UP) {
-		if (player.y > PLAYER_TOP) player.y -= PLAYER_SPEED;
+		if (player.y > PLAYER_TOP) ply_ctl.speed.w = PLAYER_MAX_SPEED;
 	} else if (joy & PORT_A_KEY_DOWN) {
-		if (player.y < PLAYER_BOTTOM) player.y += PLAYER_SPEED;
+		if (player.y < PLAYER_BOTTOM) ply_ctl.speed.w = PLAYER_MIN_SPEED;
 	}
 	
 	if (ply_ctl.death_delay) ply_ctl.death_delay--;
@@ -167,6 +172,8 @@ void gameplay_loop() {
 	player.animation_delay = 20;
 	ply_ctl.crashing_countdown = 0;
 	ply_ctl.death_delay = 0;
+	ply_ctl.speed.w = PLAYER_MED_SPEED;
+	ply_ctl.displacement.w = 0;
 	
 	while (1) {	
 		handle_player_input();
@@ -181,9 +188,12 @@ void gameplay_loop() {
 		SMS_waitForVBlank();
 		SMS_copySpritestoSAT();
 		
-		// Scroll two lines per frame
-		draw_map();		
-		draw_map();		
+		// Scroll map lines according to speed
+		ply_ctl.displacement.w += ply_ctl.speed.w;
+		for (char linesToScroll = ply_ctl.displacement.b.h; linesToScroll; linesToScroll--) {
+			draw_map();		
+		}
+		ply_ctl.displacement.b.h = 0;
 	}
 }
 

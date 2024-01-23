@@ -12,13 +12,20 @@
 #define PLAYER_RIGHT (256 - 16)
 #define PLAYER_BOTTOM (SCREEN_H - 16)
 #define PLAYER_SPEED (3)
+#define PLAYER_MIN_SPEED (0x080)
+#define PLAYER_MED_SPEED (0x100)
+#define PLAYER_MAX_SPEED (0x200)
 #define PLAYER_NEUTRAL_TILE (8)
 #define PLAYER_CRASHING_TILE (PLAYER_NEUTRAL_TILE + 64)
+#define PLAYER_DEATH_DELAY (90)
+#define PLAYER_CRASHING_COUNTDOWN (60)
 
 actor player;
 
 struct ply_ctl {
+	char crashing_countdown;
 	char death_delay;
+	fixed speed, displacement;
 } ply_ctl;
 
 char frames_elapsed;
@@ -51,12 +58,14 @@ void handle_player_input() {
 		if (player.x < PLAYER_RIGHT) player.x += PLAYER_SPEED;
 	}
 
+	ply_ctl.speed.w = PLAYER_MED_SPEED;
 	if (joy & PORT_A_KEY_UP) {
-		if (player.y > PLAYER_TOP) player.y -= PLAYER_SPEED;
+		if (player.y > PLAYER_TOP) ply_ctl.speed.w = PLAYER_MAX_SPEED;
 	} else if (joy & PORT_A_KEY_DOWN) {
-		if (player.y < PLAYER_BOTTOM) player.y += PLAYER_SPEED;
+		if (player.y < PLAYER_BOTTOM) ply_ctl.speed.w = PLAYER_MIN_SPEED;
 	}
 	
+	if (ply_ctl.death_delay) ply_ctl.death_delay--;
 }
 
 void draw_player() {
@@ -125,6 +134,16 @@ void draw_collision() {
 	player.base_tile = PLAYER_NEUTRAL_TILE;
 	if (left < px && right < px || left > px && right > px) {
 		player.base_tile = PLAYER_CRASHING_TILE;
+		if (!ply_ctl.death_delay) {
+			if (ply_ctl.crashing_countdown) {
+				ply_ctl.crashing_countdown--;
+				if (!ply_ctl.death_delay) ply_ctl.death_delay = PLAYER_DEATH_DELAY;
+			} else {
+				ply_ctl.crashing_countdown = PLAYER_CRASHING_COUNTDOWN;
+			}
+		}
+	} else {
+		ply_ctl.crashing_countdown = 0;
 	}
 }
 
@@ -151,7 +170,10 @@ void gameplay_loop() {
 	
 	init_actor(&player, 116, PLAYER_BOTTOM - 16, 2, 1, PLAYER_NEUTRAL_TILE, 1);
 	player.animation_delay = 20;
+	ply_ctl.crashing_countdown = 0;
 	ply_ctl.death_delay = 0;
+	ply_ctl.speed.w = PLAYER_MED_SPEED;
+	ply_ctl.displacement.w = 0;
 	
 	while (1) {	
 		handle_player_input();
@@ -166,9 +188,12 @@ void gameplay_loop() {
 		SMS_waitForVBlank();
 		SMS_copySpritestoSAT();
 		
-		// Scroll two lines per frame
-		draw_map();		
-		draw_map();		
+		// Scroll map lines according to speed
+		ply_ctl.displacement.w += ply_ctl.speed.w;
+		for (char linesToScroll = ply_ctl.displacement.b.h; linesToScroll; linesToScroll--) {
+			draw_map();		
+		}
+		ply_ctl.displacement.b.h = 0;
 	}
 }
 
@@ -179,7 +204,7 @@ void main() {
 }
 
 SMS_EMBED_SEGA_ROM_HEADER(9999,0); // code 9999 hopefully free, here this means 'homebrew'
-SMS_EMBED_SDSC_HEADER(0,1, 2024,1,18, "Haroldo-OK\\2024", "River Strike (Initial prototype)",
+SMS_EMBED_SDSC_HEADER(0,2, 2024,1,22, "Haroldo-OK\\2024", "River Strike (Initial prototype)",
   "A River Raid Clone.\n"
   "Originally made for the Minigame a Month - JANUARY 2024 - Water - https://itch.io/jam/minigame-a-month-january-2024\n"
   "Built using devkitSMS & SMSlib - https://github.com/sverx/devkitSMS");

@@ -125,8 +125,8 @@ void update_river_stream(char *buffer, river_stream *stream) {
 		}		
 	}
 
-	if (stream->x < 1) {
-		stream->x = 1;
+	if (stream->x < 2) {
+		stream->x = 2;
 	} else if (stream->x + stream->w > MAP_W - 1) {
 		stream->x = MAP_W - stream->w - 1;
 	}

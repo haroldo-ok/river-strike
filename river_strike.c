@@ -11,7 +11,7 @@
 #define PLAYER_LEFT (0)
 #define PLAYER_RIGHT (256 - 16)
 #define PLAYER_BOTTOM (SCREEN_H - 16)
-#define PLAYER_SPEED (3)
+#define PLAYER_SPEED (1)
 #define PLAYER_MIN_SPEED (0x080)
 #define PLAYER_MED_SPEED (0x100)
 #define PLAYER_MAX_SPEED (0x200)

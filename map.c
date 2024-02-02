@@ -79,7 +79,7 @@ void get_margins(char *left, char *right, char x, char y) {
 	static char bg_x, bg_y;
 	static char *row_data;
 
-	bg_y = map_data.background_y + (y >> 3);
+	bg_y = map_data.background_y + (y >> 3) + 2;
 	if (bg_y > SCROLL_CHAR_H) bg_y -= SCROLL_CHAR_H;
 	row_data = map_data.circular_buffer[bg_y >> 1];
 
@@ -125,8 +125,8 @@ void update_river_stream(char *buffer, river_stream *stream) {
 		}		
 	}
 
-	if (stream->x < 1) {
-		stream->x = 1;
+	if (stream->x < 2) {
+		stream->x = 2;
 	} else if (stream->x + stream->w > MAP_W - 1) {
 		stream->x = MAP_W - stream->w - 1;
 	}

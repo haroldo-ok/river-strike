@@ -11,7 +11,7 @@
 #define PLAYER_LEFT (0)
 #define PLAYER_RIGHT (256 - 16)
 #define PLAYER_BOTTOM (SCREEN_H - 16)
-#define PLAYER_SPEED (3)
+#define PLAYER_SPEED (1)
 #define PLAYER_MIN_SPEED (0x080)
 #define PLAYER_MED_SPEED (0x100)
 #define PLAYER_MAX_SPEED (0x200)
@@ -126,10 +126,8 @@ void draw_collision() {
 	px = player.x + 8;
 	get_margins(&left, &right, px, player.y + 8);
 	
-	/*	
-	SMS_addSprite(left, player.y, 16);
-	SMS_addSprite(right, player.y, 16);
-	*/
+	SMS_addSprite(left, player.y + 8, 16);
+	SMS_addSprite(right, player.y + 8, 16);
 	
 	player.base_tile = PLAYER_NEUTRAL_TILE;
 	if (left < px && right < px || left > px && right > px) {

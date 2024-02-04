@@ -78,6 +78,8 @@ void move_actor(actor *_act) {
 	
 	act = _act;
 	
+	act->x += act->spd_x;
+		
 	if (act->state_timer) act->state_timer--;
 }
 

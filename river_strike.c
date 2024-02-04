@@ -126,8 +126,10 @@ void draw_collision() {
 	px = player.x + 8;
 	get_margins(&left, &right, px, player.y + 8);
 	
+	/*
 	SMS_addSprite(left, player.y + 8, 16);
-	SMS_addSprite(right, player.y + 8, 16);
+	SMS_addSprite(right, player.y + 8, 16);]
+	*/
 	
 	player.base_tile = PLAYER_NEUTRAL_TILE;
 	if (left < px && right < px || left > px && right > px) {
@@ -175,7 +177,8 @@ void gameplay_loop() {
 	
 	while (1) {	
 		handle_player_input();
-		
+		move_enemies();
+
 		SMS_initSprites();
 
 		draw_collision();

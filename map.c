@@ -58,6 +58,10 @@ void scroll_enemies() {
 void draw_enemies() {
 	FOR_EACH(actor *enm, enemies) {
 		draw_actor(enm);
+		if (enm->active) {
+			SMS_addSprite(enm->min_x, enm->y, 14);
+			SMS_addSprite(enm->max_x, enm->y, 16);
+		}
 	}
 }
 
@@ -94,6 +98,14 @@ void get_margins(char *left, char *right, char x, char y) {
 
 	for (bg_x = (x >> 4); bg_x < 16 && row_data[bg_x] == TILE_WATER; bg_x++);
 	*right = (bg_x << 4);
+}
+
+void set_min_max_x_to_margins(actor *act) {
+	char left, right;
+	get_margins(&left, &right, act->x + 12, act->y + 16);
+	
+	act->min_x = left;
+	act->max_x = right;
 }
 
 void update_river_stream(char *buffer, river_stream *stream) {
@@ -173,11 +185,13 @@ void generate_map_row(char *buffer) {
 			switch (rand() & 0x03) {
 			case 0:
 				init_actor(enm, enm_x, 0, 4, 1, ENEMY_TILE_SHIP, 1);
+				set_min_max_x_to_margins(enm);
 				enm->spd_x = 1;
 				break;
 				
 			case 1:
 				init_actor(enm, enm_x, 0, 3, 1, ENEMY_TILE_HELI, 1);
+				set_min_max_x_to_margins(enm);
 				enm->spd_x = 1;
 				break;
 				

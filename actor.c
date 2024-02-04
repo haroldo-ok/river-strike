@@ -79,6 +79,15 @@ void move_actor(actor *_act) {
 	act = _act;
 	
 	act->x += act->spd_x;
+	if (act->min_x || act->max_x) {
+		if (act->x < act->min_x) {
+			act->x = act->min_x;
+			act->spd_x = -act->spd_x;
+		} else if (act->x > act->max_x) {
+			act->x = act->max_x;
+			act->spd_x = -act->spd_x;
+		}
+	}
 		
 	if (act->state_timer) act->state_timer--;
 }

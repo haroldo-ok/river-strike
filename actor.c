@@ -141,7 +141,7 @@ char is_touching(actor *act1, actor *act2) {
 	collider1 = act1;
 	collider2 = act2;
 	
-	// Less rough collision on the Y axis
+	// Collision on the Y axis
 	
 	r1_tly = collider1->y + collider1->col_y;
 	r1_bry = r1_tly + collider1->col_h;
@@ -159,7 +159,7 @@ char is_touching(actor *act1, actor *act2) {
 		return 0;
 	}
 	
-	// Less rough collision on the X axis
+	// Collision on the X axis
 	
 	r1_tlx = collider1->x + collider1->col_x;
 	r1_brx = r1_tlx + collider1->col_w;

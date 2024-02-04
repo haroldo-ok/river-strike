@@ -72,20 +72,9 @@ void draw_player() {
 	if (!(ply_ctl.death_delay & 0x08)) draw_actor(&player);
 }
 
-char is_colliding_against_player(actor *_act) {
-	static actor *act;
-	static int act_x, act_y;
-	
-	act = _act;
-	act_x = act->x;
-	act_y = act->y;
-	
-	if (player.x > act_x - 12 && player.x < act_x + 12 &&
-		player.y > act_y - 12 && player.y < act_y + 12) {
-		return 1;
-	}
-	
-	return 0;
+void check_player_enemy_collision() {
+	actor *enm = find_colliding_enemy(&player);
+	if (enm) ply_ctl.death_delay = PLAYER_DEATH_DELAY;
 }
 
 void draw_background() {
@@ -178,6 +167,7 @@ void gameplay_loop() {
 	while (1) {	
 		handle_player_input();
 		move_enemies();
+		check_player_enemy_collision();
 
 		SMS_initSprites();
 

@@ -68,6 +68,15 @@ actor* find_free_enemy() {
 	return 0;
 }
 
+actor* find_colliding_enemy(actor *other) {
+	FOR_EACH(actor *enm, enemies) {
+		if (enm->active && is_touching(enm, other)) {
+			return enm;
+		}
+	}	
+	return 0;
+}
+
 void init_map(void *level_data) {
 	map_data.level_data = level_data;
 	map_data.next_row = level_data;
@@ -106,6 +115,13 @@ void set_min_max_x_to_margins(actor *act) {
 		act->max_x = act->min_x + 16;
 		act->spd_x = 0;
 	}
+}
+
+void set_enemy_collision(actor *act) {
+	act->col_w = act->pixel_w - 8;
+	act->col_h = act->pixel_h - 8;
+	act->col_x = (act->pixel_w - act->col_w) >> 1;
+	act->col_y = (act->pixel_h - act->col_h) >> 1;
 }
 
 void update_river_stream(char *buffer, river_stream *stream) {
@@ -186,17 +202,20 @@ void generate_map_row(char *buffer) {
 			case 0:
 				init_actor(enm, enm_x, 0, 4, 1, ENEMY_TILE_SHIP, 1);
 				set_min_max_x_to_margins(enm);
+				set_enemy_collision(enm);
 				enm->spd_x = 1;
 				break;
 				
 			case 1:
 				init_actor(enm, enm_x, 0, 3, 1, ENEMY_TILE_HELI, 1);
 				set_min_max_x_to_margins(enm);
+				set_enemy_collision(enm);
 				enm->spd_x = 1;
 				break;
 				
 			case 2:
 				init_actor(enm, 0, 0, 3, 1, ENEMY_TILE_PLANE, 1);
+				set_enemy_collision(enm);
 				enm->spd_x = 2;
 				break;
 			}

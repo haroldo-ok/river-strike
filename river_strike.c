@@ -14,13 +14,16 @@
 #define PLAYER_SPEED (1)
 #define PLAYER_MIN_SPEED (0x080)
 #define PLAYER_MED_SPEED (0x100)
-#define PLAYER_MAX_SPEED (0x200)
+#define PLAYER_MAX_SPEED (0x250)
+#define PLAYER_SHOT_SPEED (5)
 #define PLAYER_NEUTRAL_TILE (8)
 #define PLAYER_CRASHING_TILE (PLAYER_NEUTRAL_TILE + 64)
+#define PLAYER_SHOT_TILE (18)
 #define PLAYER_DEATH_DELAY (90)
 #define PLAYER_CRASHING_COUNTDOWN (60)
 
 actor player;
+actor shot;
 
 struct ply_ctl {
 	char crashing_countdown;
@@ -65,6 +68,14 @@ void handle_player_input() {
 		if (player.y < PLAYER_BOTTOM) ply_ctl.speed.w = PLAYER_MIN_SPEED;
 	}
 	
+	if (joy & (PORT_A_KEY_1 | PORT_A_KEY_2)) {
+		if (!shot.active) {
+			shot.x = player.x + 4;
+			shot.y = player.y - 12;
+			shot.active = 1;
+		}
+	}
+
 	if (ply_ctl.death_delay) ply_ctl.death_delay--;
 }
 
@@ -72,20 +83,26 @@ void draw_player() {
 	if (!(ply_ctl.death_delay & 0x08)) draw_actor(&player);
 }
 
-char is_colliding_against_player(actor *_act) {
-	static actor *act;
-	static int act_x, act_y;
-	
-	act = _act;
-	act_x = act->x;
-	act_y = act->y;
-	
-	if (player.x > act_x - 12 && player.x < act_x + 12 &&
-		player.y > act_y - 12 && player.y < act_y + 12) {
-		return 1;
+void move_shot() {
+	shot.y -= PLAYER_SHOT_SPEED;
+	if (shot.y < 0) shot.active = 0;
+}
+
+void draw_shot() {
+	draw_actor(&shot);
+}
+
+void check_player_enemy_collision() {
+	actor *enm = find_colliding_enemy(&player);
+	if (enm) ply_ctl.death_delay = PLAYER_DEATH_DELAY;
+}
+
+void check_shot_enemy_collision() {
+	actor *enm = find_colliding_enemy(&shot);
+	if (enm) {
+		enm->active = 0;
+		shot.active = 0;
 	}
-	
-	return 0;
 }
 
 void draw_background() {
@@ -175,15 +192,22 @@ void gameplay_loop() {
 	ply_ctl.speed.w = PLAYER_MED_SPEED;
 	ply_ctl.displacement.w = 0;
 	
+	init_actor(&shot, 0, 0, 1, 1, PLAYER_SHOT_TILE, 1);
+	shot.active = 0;
+
 	while (1) {	
 		handle_player_input();
+		move_shot();
 		move_enemies();
+		check_player_enemy_collision();
+		check_shot_enemy_collision();
 
 		SMS_initSprites();
 
 		draw_collision();
 		draw_player();
 		draw_enemies();
+		draw_shot();
 		
 		SMS_finalizeSprites();
 		SMS_waitForVBlank();

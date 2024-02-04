@@ -97,6 +97,14 @@ void check_player_enemy_collision() {
 	if (enm) ply_ctl.death_delay = PLAYER_DEATH_DELAY;
 }
 
+void check_shot_enemy_collision() {
+	actor *enm = find_colliding_enemy(&shot);
+	if (enm) {
+		enm->active = 0;
+		shot.active = 0;
+	}
+}
+
 void draw_background() {
 	unsigned int *ch = background_tilemap_bin;
 	
@@ -192,6 +200,7 @@ void gameplay_loop() {
 		move_shot();
 		move_enemies();
 		check_player_enemy_collision();
+		check_shot_enemy_collision();
 
 		SMS_initSprites();
 

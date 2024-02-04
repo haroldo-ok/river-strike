@@ -43,6 +43,9 @@ typedef struct actor {
 	char active;
 	
 	int x, y;
+
+	int spd_x;
+	int min_x, max_x;
 	
 	char facing_left;
 	

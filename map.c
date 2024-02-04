@@ -42,6 +42,12 @@ void init_enemies() {
 
 void move_enemies() {
 	FOR_EACH(actor *enm, enemies) {
+		move_actor(enm);
+	}
+}
+
+void scroll_enemies() {
+	FOR_EACH(actor *enm, enemies) {
 		if (enm->active) {
 			enm->y++;
 			if (enm->y > SCREEN_H) enm->active = 0;
@@ -88,6 +94,18 @@ void get_margins(char *left, char *right, char x, char y) {
 
 	for (bg_x = (x >> 4); bg_x < 16 && row_data[bg_x] == TILE_WATER; bg_x++);
 	*right = (bg_x << 4);
+}
+
+void set_min_max_x_to_margins(actor *act) {
+	char left, right;
+	get_margins(&left, &right, act->x + 16, act->y + 8);
+	
+	act->min_x = left;
+	act->max_x = right + 16 - act->pixel_w;
+	if (act->max_x < act->min_x) {
+		act->max_x = act->min_x + 16;
+		act->spd_x = 0;
+	}
 }
 
 void update_river_stream(char *buffer, river_stream *stream) {
@@ -167,14 +185,19 @@ void generate_map_row(char *buffer) {
 			switch (rand() & 0x03) {
 			case 0:
 				init_actor(enm, enm_x, 0, 4, 1, ENEMY_TILE_SHIP, 1);
+				set_min_max_x_to_margins(enm);
+				enm->spd_x = 1;
 				break;
 				
 			case 1:
 				init_actor(enm, enm_x, 0, 3, 1, ENEMY_TILE_HELI, 1);
+				set_min_max_x_to_margins(enm);
+				enm->spd_x = 1;
 				break;
 				
 			case 2:
-				init_actor(enm, enm_x, 0, 3, 1, ENEMY_TILE_PLANE, 1);
+				init_actor(enm, 0, 0, 3, 1, ENEMY_TILE_PLANE, 1);
+				enm->spd_x = 2;
 				break;
 			}
 		}
@@ -238,5 +261,5 @@ void draw_map() {
 		map_data.scroll_y = SCROLL_H - 1;
 	}
 
-	move_enemies();
+	scroll_enemies();
 }

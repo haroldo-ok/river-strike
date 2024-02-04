@@ -37,6 +37,11 @@ void init_actor(actor *act, int x, int y, int char_w, int char_h, unsigned char 
 	
 	sa->x = x;
 	sa->y = y;
+	
+	sa->spd_x = 0;
+	sa->min_x = 0;
+	sa->max_x = 0;
+	
 	sa->facing_left = 1;
 	
 	sa->char_w = char_w;
@@ -52,10 +57,6 @@ void init_actor(actor *act, int x, int y, int char_w, int char_h, unsigned char 
 	sa->frame = 0;
 	sa->frame_increment = char_w * (char_h << 1);
 	sa->frame_max = sa->frame_increment * frame_count;
-
-	sa->path_flags = 0;
-	sa->path = 0;
-	sa->curr_step = 0;
 	
 	sa->col_w = sa->pixel_w - 4;
 	sa->col_h = sa->pixel_h - 4;
@@ -77,29 +78,17 @@ void move_actor(actor *_act) {
 	
 	act = _act;
 	
-	if (act->path) {
-		curr_step = act->curr_step;
-		
-		if (!curr_step) curr_step = act->path;
-		step = curr_step++;
-		if (step->x == -128) step = curr_step = act->path;
-		
-		path_flags = act->path_flags;
-		act->x += (path_flags & PATH_FLIP_X) ? -step->x : step->x;
-		act->y += (path_flags & PATH_FLIP_Y) ? -step->y : step->y;
-		
-		if (path_flags & PATH_2X_SPEED) {
-			step = curr_step++;
-			if (step->x == -128) step = curr_step = act->path;
-			
-			path_flags = act->path_flags;
-			act->x += (path_flags & PATH_FLIP_X) ? -step->x : step->x;
-			act->y += (path_flags & PATH_FLIP_Y) ? -step->y : step->y;
+	act->x += act->spd_x;
+	if (act->min_x || act->max_x) {
+		if (act->x < act->min_x) {
+			act->x = act->min_x;
+			act->spd_x = -act->spd_x;
+		} else if (act->x > act->max_x) {
+			act->x = act->max_x;
+			act->spd_x = -act->spd_x;
 		}
-
-		act->curr_step = curr_step;
 	}
-	
+		
 	if (act->state_timer) act->state_timer--;
 }
 

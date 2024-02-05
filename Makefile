@@ -1,5 +1,5 @@
 PRJNAME := river_strike
-OBJS := data.rel actor.rel map.rel score.rel river_strike.rel
+OBJS := data.rel actor.rel map.rel score.rel status.rel river_strike.rel
 
 all: $(PRJNAME).sms
 

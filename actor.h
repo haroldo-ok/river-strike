@@ -52,6 +52,8 @@ typedef struct actor {
 	char char_w, char_h;
 	char pixel_w, pixel_h;
 	
+	char type;
+	
 	unsigned char animation_delay, animation_delay_max;
 	unsigned char base_tile, frame_count;
 	unsigned char frame, frame_increment, frame_max;

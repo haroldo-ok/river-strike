@@ -1,6 +1,11 @@
 #ifndef MAP_H
 #define MAP_H
 
+#define ENEMY_TILE_SHIP (130)
+#define ENEMY_TILE_HELI (138)
+#define ENEMY_TILE_PLANE (144)
+#define ENEMY_TILE_FUEL (20)
+
 void init_map(void *level_data);
 void draw_map_screen();
 void draw_map();

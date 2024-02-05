@@ -5,6 +5,7 @@
 #include "lib/PSGlib.h"
 #include "actor.h"
 #include "map.h"
+#include "status.h"
 #include "data.h"
 
 #define PLAYER_TOP (0)
@@ -63,9 +64,9 @@ void handle_player_input() {
 
 	ply_ctl.speed.w = PLAYER_MED_SPEED;
 	if (joy & PORT_A_KEY_UP) {
-		if (player.y > PLAYER_TOP) ply_ctl.speed.w = PLAYER_MAX_SPEED;
+		ply_ctl.speed.w = PLAYER_MAX_SPEED;
 	} else if (joy & PORT_A_KEY_DOWN) {
-		if (player.y < PLAYER_BOTTOM) ply_ctl.speed.w = PLAYER_MIN_SPEED;
+		ply_ctl.speed.w = PLAYER_MIN_SPEED;
 	}
 	
 	if (joy & (PORT_A_KEY_1 | PORT_A_KEY_2)) {
@@ -94,7 +95,13 @@ void draw_shot() {
 
 void check_player_enemy_collision() {
 	actor *enm = find_colliding_enemy(&player);
-	if (enm) ply_ctl.death_delay = PLAYER_DEATH_DELAY;
+	if (!enm) return;
+	
+	if (enm->type == ENEMY_TILE_FUEL) {
+	} else {
+		// Other enemies kill the player
+		ply_ctl.death_delay = PLAYER_DEATH_DELAY;
+	}
 }
 
 void check_shot_enemy_collision() {
@@ -208,6 +215,7 @@ void gameplay_loop() {
 		draw_player();
 		draw_enemies();
 		draw_shot();
+		draw_fuel_gauge();
 		
 		SMS_finalizeSprites();
 		SMS_waitForVBlank();

@@ -42,6 +42,7 @@ void init_actor(actor *act, int x, int y, int char_w, int char_h, unsigned char 
 	sa->min_x = 0;
 	sa->max_x = 0;
 	
+	sa->type = base_tile;
 	sa->facing_left = 1;
 	
 	sa->char_w = char_w;

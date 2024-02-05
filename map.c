@@ -12,11 +12,6 @@
 #define TILE_WATER (4)
 #define TILE_LAND (17)
 
-#define ENEMY_TILE_SHIP (130)
-#define ENEMY_TILE_HELI (138)
-#define ENEMY_TILE_PLANE (144)
-#define ENEMY_TILE_FUEL (20)
-
 typedef struct river_stream {
 	char x, w;
 } river_stream;

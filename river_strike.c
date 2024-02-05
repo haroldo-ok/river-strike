@@ -94,7 +94,13 @@ void draw_shot() {
 
 void check_player_enemy_collision() {
 	actor *enm = find_colliding_enemy(&player);
-	if (enm) ply_ctl.death_delay = PLAYER_DEATH_DELAY;
+	if (!enm) return;
+	
+	if (enm->type == ENEMY_TILE_FUEL) {
+	} else {
+		// Other enemies kill the player
+		ply_ctl.death_delay = PLAYER_DEATH_DELAY;
+	}
 }
 
 void check_shot_enemy_collision() {

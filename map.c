@@ -15,6 +15,7 @@
 #define ENEMY_TILE_SHIP (130)
 #define ENEMY_TILE_HELI (138)
 #define ENEMY_TILE_PLANE (144)
+#define ENEMY_TILE_FUEL (20)
 
 typedef struct river_stream {
 	char x, w;
@@ -124,6 +125,13 @@ void set_enemy_collision(actor *act) {
 	act->col_y = (act->pixel_h - act->col_h) >> 1;
 }
 
+void set_fuel_collision(actor *act) {
+	act->col_x = 0;
+	act->col_y = 0;
+	act->col_w = act->pixel_w;
+	act->col_h = act->pixel_h;
+}
+
 void update_river_stream(char *buffer, river_stream *stream) {
 	static char *d;
 	static char remaining;
@@ -212,11 +220,16 @@ void generate_map_row(char *buffer) {
 				set_enemy_collision(enm);
 				enm->spd_x = 1;
 				break;
-				
+
 			case 2:
 				init_actor(enm, 0, 0, 3, 1, ENEMY_TILE_PLANE, 1);
 				set_enemy_collision(enm);
 				enm->spd_x = 2;
+				break;
+
+			case 3:
+				init_actor(enm, enm_x, 0, 1, 2, ENEMY_TILE_FUEL, 1);
+				set_fuel_collision(enm);
 				break;
 			}
 		}

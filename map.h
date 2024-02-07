@@ -2,8 +2,8 @@
 #define MAP_H
 
 #define ENEMY_TILE_SHIP (130)
-#define ENEMY_TILE_HELI (138)
-#define ENEMY_TILE_PLANE (144)
+#define ENEMY_TILE_HELI (146)
+#define ENEMY_TILE_PLANE (158)
 #define ENEMY_TILE_FUEL (20)
 
 void init_map(void *level_data);

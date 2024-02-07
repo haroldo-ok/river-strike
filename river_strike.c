@@ -201,6 +201,8 @@ void gameplay_loop() {
 	
 	init_actor(&shot, 0, 0, 1, 1, PLAYER_SHOT_TILE, 1);
 	shot.active = 0;
+	
+	init_enemies();
 
 	while (1) {	
 		handle_player_input();

@@ -111,6 +111,11 @@ void set_min_max_x_to_margins(actor *act) {
 		act->max_x = act->min_x + 16;
 		act->spd_x = 0;
 	}
+	
+	int range_x = act->max_x - act->min_x;
+	if (range_x) {
+		act->x += rand() % range_x;
+	}
 }
 
 void set_enemy_collision(actor *act) {

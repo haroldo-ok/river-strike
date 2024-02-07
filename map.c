@@ -219,6 +219,7 @@ void generate_map_row(char *buffer) {
 				set_min_max_x_to_margins(enm);
 				set_enemy_collision(enm);
 				enm->spd_x = 1;
+				enm->facing_left = 0;
 				break;
 
 			case 2:

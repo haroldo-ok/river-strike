@@ -12,8 +12,12 @@
 #define TILE_WATER (4)
 #define TILE_LAND (17)
 
+#define LEVEL_LENGTH (16)
+#define BRIDGE_LEFT (7)
+
 typedef struct river_stream {
 	char x, w;
+	char bridge_done;
 } river_stream;
 
 struct map_data {
@@ -22,7 +26,9 @@ struct map_data {
 	char background_y;
 	char lines_before_next;
 	char scroll_y;
-
+	
+	char rows_for_level;
+	
 	river_stream stream1, stream2;
 	char circular_buffer[SCROLL_CHAR_H][SCREEN_CHAR_W];
 } map_data;
@@ -81,10 +87,15 @@ void init_map(void *level_data) {
 	map_data.lines_before_next = 0;
 	map_data.scroll_y = 0;
 	
-	map_data.stream1.x = 7;
+	map_data.rows_for_level = LEVEL_LENGTH;
+	
+	map_data.stream1.x = BRIDGE_LEFT;
 	map_data.stream1.w = STREAM_MIN_W;
-	map_data.stream2.x = 7;
+	map_data.stream1.bridge_done = 0;
+
+	map_data.stream2.x = BRIDGE_LEFT;
 	map_data.stream2.w = STREAM_MIN_W;
+	map_data.stream2.bridge_done = 0;
 }
 
 void get_margins(char *left, char *right, char x, char y) {
@@ -144,34 +155,58 @@ void update_river_stream(char *buffer, river_stream *stream) {
 		d++;
 	}
 
-	// Update width
-	if (!(rand() & 0x03)) {
-		if (rand() & 0x80) {
-			stream->w--;
-		} else {
-			stream->w++;
+	if (map_data.rows_for_level) {
+		// Level is not ending, yet
+		
+		// Update width
+		if (!(rand() & 0x03)) {
+			if (rand() & 0x80) {
+				stream->w--;
+			} else {
+				stream->w++;
+			}
+			
+			if (stream->w < STREAM_MIN_W) {
+				stream->w = STREAM_MIN_W;
+			} else if (stream->w > STREAM_MAX_W) {
+				stream->w = STREAM_MAX_W;
+			}
+		}
+
+		// Update X coord
+		if (stream->w > STREAM_MIN_W && !(rand() & 0x03)) {
+			if (rand() & 0x80) {
+				stream->x--;
+			} else {
+				stream->x++;
+			}		
+		}
+
+		// Clip X coord
+		if (stream->x < 2) {
+			stream->x = 2;
+		} else if (stream->x + stream->w > MAP_W - 1) {
+			stream->x = MAP_W - stream->w - 1;
+		}
+	} else {
+		// Level is ending: create space for the bridge.
+		
+		stream->bridge_done = 1;
+		
+		// Gradually shift the stream towards the bridge
+		if (stream->x < BRIDGE_LEFT) {
+			stream->x++;
+			stream->bridge_done = 0;
+		} else if (stream->x > BRIDGE_LEFT) {
+			stream->x--;
+			stream->bridge_done = 0;
 		}
 		
-		if (stream->w < STREAM_MIN_W) {
-			stream->w = STREAM_MIN_W;
-		} else if (stream->w > STREAM_MAX_W) {
-			stream->w = STREAM_MAX_W;
+		// Gradually narrow the stream to match the bridge
+		if (stream->w > STREAM_MIN_W) {
+			stream->w--;
+			stream->bridge_done = 0;
 		}
-	}
-
-	// Update X coord
-	if (stream->w > STREAM_MIN_W && !(rand() & 0x03)) {
-		if (rand() & 0x80) {
-			stream->x--;
-		} else {
-			stream->x++;
-		}		
-	}
-
-	if (stream->x < 2) {
-		stream->x = 2;
-	} else if (stream->x + stream->w > MAP_W - 1) {
-		stream->x = MAP_W - stream->w - 1;
 	}
 }
 
@@ -190,8 +225,14 @@ void generate_map_row(char *buffer) {
 		d++;
 	}
 	
+	if (map_data.rows_for_level) map_data.rows_for_level--;	
+	
 	update_river_stream(buffer, &map_data.stream1);
 	update_river_stream(buffer, &map_data.stream2);
+	
+	if (!map_data.rows_for_level && map_data.stream1.bridge_done && map_data.stream2.bridge_done) {
+		map_data.rows_for_level = LEVEL_LENGTH;	
+	}
 	
 	prev = buffer;
 	d = buffer + 1;

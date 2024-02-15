@@ -37,6 +37,12 @@ void init_actor(actor *act, int x, int y, int char_w, int char_h, unsigned char 
 	
 	sa->x = x;
 	sa->y = y;
+	
+	sa->spd_x = 0;
+	sa->min_x = 0;
+	sa->max_x = 0;
+	
+	sa->type = base_tile;
 	sa->facing_left = 1;
 	
 	sa->char_w = char_w;
@@ -52,10 +58,6 @@ void init_actor(actor *act, int x, int y, int char_w, int char_h, unsigned char 
 	sa->frame = 0;
 	sa->frame_increment = char_w * (char_h << 1);
 	sa->frame_max = sa->frame_increment * frame_count;
-
-	sa->path_flags = 0;
-	sa->path = 0;
-	sa->curr_step = 0;
 	
 	sa->col_w = sa->pixel_w - 4;
 	sa->col_h = sa->pixel_h - 4;
@@ -77,29 +79,17 @@ void move_actor(actor *_act) {
 	
 	act = _act;
 	
-	if (act->path) {
-		curr_step = act->curr_step;
-		
-		if (!curr_step) curr_step = act->path;
-		step = curr_step++;
-		if (step->x == -128) step = curr_step = act->path;
-		
-		path_flags = act->path_flags;
-		act->x += (path_flags & PATH_FLIP_X) ? -step->x : step->x;
-		act->y += (path_flags & PATH_FLIP_Y) ? -step->y : step->y;
-		
-		if (path_flags & PATH_2X_SPEED) {
-			step = curr_step++;
-			if (step->x == -128) step = curr_step = act->path;
-			
-			path_flags = act->path_flags;
-			act->x += (path_flags & PATH_FLIP_X) ? -step->x : step->x;
-			act->y += (path_flags & PATH_FLIP_Y) ? -step->y : step->y;
+	act->x += act->spd_x;
+	if (act->min_x || act->max_x) {
+		if (act->x < act->min_x) {
+			act->x = act->min_x;
+			act->spd_x = -act->spd_x;
+		} else if (act->x > act->max_x) {
+			act->x = act->max_x;
+			act->spd_x = -act->spd_x;
 		}
-
-		act->curr_step = curr_step;
 	}
-	
+		
 	if (act->state_timer) act->state_timer--;
 }
 
@@ -141,4 +131,52 @@ void clear_sprites() {
 	SMS_initSprites();	
 	SMS_finalizeSprites();
 	SMS_copySpritestoSAT();
+}
+
+char is_touching(actor *act1, actor *act2) {
+	static actor *collider1, *collider2;
+	static int r1_tlx, r1_tly, r1_brx, r1_bry;
+	static int r2_tlx, r2_tly, r2_bry;
+
+	// Use global variables for speed
+	collider1 = act1;
+	collider2 = act2;
+	
+	// Collision on the Y axis
+	
+	r1_tly = collider1->y + collider1->col_y;
+	r1_bry = r1_tly + collider1->col_h;
+	r2_tly = collider2->y + collider2->col_y;
+	
+	// act1 is too far above
+	if (r1_bry < r2_tly) {
+		return 0;
+	}
+	
+	r2_bry = r2_tly + collider2->col_h;
+	
+	// act1 is too far below
+	if (r1_tly > r2_bry) {
+		return 0;
+	}
+	
+	// Collision on the X axis
+	
+	r1_tlx = collider1->x + collider1->col_x;
+	r1_brx = r1_tlx + collider1->col_w;
+	r2_tlx = collider2->x + collider2->col_x;
+	
+	// act1 is too far to the left
+	if (r1_brx < r2_tlx) {
+		return 0;
+	}
+	
+	int r2_brx = r2_tlx + collider2->col_w;
+	
+	// act1 is too far to the left
+	if (r1_tlx > r2_brx) {
+		return 0;
+	}
+	
+	return 1;
 }

@@ -11,13 +11,15 @@
 #define STREAM_MAX_W (5)
 #define TILE_WATER (4)
 #define TILE_LAND (17)
+#define TILE_BRIDGE (5)
 
-#define ENEMY_TILE_SHIP (130)
-#define ENEMY_TILE_HELI (138)
-#define ENEMY_TILE_PLANE (144)
+#define LEVEL_LENGTH (16)
+#define BRIDGE_LEFT (7)
+#define BRIDGE_WIDTH (STREAM_MIN_W)
 
 typedef struct river_stream {
 	char x, w;
+	char bridge_done;
 } river_stream;
 
 struct map_data {
@@ -26,7 +28,9 @@ struct map_data {
 	char background_y;
 	char lines_before_next;
 	char scroll_y;
-
+	
+	char rows_for_level;
+	
 	river_stream stream1, stream2;
 	char circular_buffer[SCROLL_CHAR_H][SCREEN_CHAR_W];
 } map_data;
@@ -41,6 +45,13 @@ void init_enemies() {
 }
 
 void move_enemies() {
+	FOR_EACH(actor *enm, enemies) {
+		move_actor(enm);
+		if (enm->active && enm->spd_x) enm->facing_left = enm->spd_x < 0;
+	}
+}
+
+void scroll_enemies() {
 	FOR_EACH(actor *enm, enemies) {
 		if (enm->active) {
 			enm->y++;
@@ -62,6 +73,15 @@ actor* find_free_enemy() {
 	return 0;
 }
 
+actor* find_colliding_enemy(actor *other) {
+	FOR_EACH(actor *enm, enemies) {
+		if (enm->active && is_touching(enm, other)) {
+			return enm;
+		}
+	}	
+	return 0;
+}
+
 void init_map(void *level_data) {
 	map_data.level_data = level_data;
 	map_data.next_row = level_data;
@@ -69,17 +89,22 @@ void init_map(void *level_data) {
 	map_data.lines_before_next = 0;
 	map_data.scroll_y = 0;
 	
-	map_data.stream1.x = 7;
+	map_data.rows_for_level = LEVEL_LENGTH;
+	
+	map_data.stream1.x = BRIDGE_LEFT;
 	map_data.stream1.w = STREAM_MIN_W;
-	map_data.stream2.x = 7;
+	map_data.stream1.bridge_done = 0;
+
+	map_data.stream2.x = BRIDGE_LEFT;
 	map_data.stream2.w = STREAM_MIN_W;
+	map_data.stream2.bridge_done = 0;
 }
 
 void get_margins(char *left, char *right, char x, char y) {
 	static char bg_x, bg_y;
 	static char *row_data;
 
-	bg_y = map_data.background_y + (y >> 3);
+	bg_y = map_data.background_y + (y >> 3) + 2;
 	if (bg_y > SCROLL_CHAR_H) bg_y -= SCROLL_CHAR_H;
 	row_data = map_data.circular_buffer[bg_y >> 1];
 
@@ -88,6 +113,37 @@ void get_margins(char *left, char *right, char x, char y) {
 
 	for (bg_x = (x >> 4); bg_x < 16 && row_data[bg_x] == TILE_WATER; bg_x++);
 	*right = (bg_x << 4);
+}
+
+void set_min_max_x_to_margins(actor *act) {
+	char left, right;
+	get_margins(&left, &right, act->x + 16, act->y + 8);
+	
+	act->min_x = left;
+	act->max_x = right + 16 - act->pixel_w;
+	if (act->max_x < act->min_x) {
+		act->max_x = act->min_x + 16;
+		act->spd_x = 0;
+	}
+	
+	int range_x = act->max_x - act->min_x;
+	if (range_x) {
+		act->x += rand() % range_x;
+	}
+}
+
+void set_enemy_collision(actor *act) {
+	act->col_w = act->pixel_w - 8;
+	act->col_h = act->pixel_h - 8;
+	act->col_x = (act->pixel_w - act->col_w) >> 1;
+	act->col_y = (act->pixel_h - act->col_h) >> 1;
+}
+
+void set_fuel_collision(actor *act) {
+	act->col_x = 0;
+	act->col_y = 0;
+	act->col_w = act->pixel_w;
+	act->col_h = act->pixel_h;
 }
 
 void update_river_stream(char *buffer, river_stream *stream) {
@@ -101,35 +157,63 @@ void update_river_stream(char *buffer, river_stream *stream) {
 		d++;
 	}
 
-	// Update width
-	if (!(rand() & 0x03)) {
-		if (rand() & 0x80) {
-			stream->w--;
-		} else {
-			stream->w++;
+	if (map_data.rows_for_level) {
+		// Level is not ending, yet
+		
+		// Update width
+		if (!(rand() & 0x03)) {
+			if (rand() & 0x80) {
+				stream->w--;
+			} else {
+				stream->w++;
+			}
+			
+			if (stream->w < STREAM_MIN_W) {
+				stream->w = STREAM_MIN_W;
+			} else if (stream->w > STREAM_MAX_W) {
+				stream->w = STREAM_MAX_W;
+			}
+		}
+
+		// Update X coord
+		if (stream->w > STREAM_MIN_W && !(rand() & 0x03)) {
+			if (rand() & 0x80) {
+				stream->x--;
+			} else {
+				stream->x++;
+			}		
+		}
+
+		// Clip X coord
+		if (stream->x < 2) {
+			stream->x = 2;
+		} else if (stream->x + stream->w > MAP_W - 1) {
+			stream->x = MAP_W - stream->w - 1;
+		}
+	} else {
+		// Level is ending: create space for the bridge.
+		
+		stream->bridge_done = 1;
+		
+		// Gradually shift the stream towards the bridge
+		if (stream->x < BRIDGE_LEFT) {
+			stream->x++;
+			stream->bridge_done = 0;
+		} else if (stream->x > BRIDGE_LEFT) {
+			stream->x--;
+			stream->bridge_done = 0;
 		}
 		
-		if (stream->w < STREAM_MIN_W) {
-			stream->w = STREAM_MIN_W;
-		} else if (stream->w > STREAM_MAX_W) {
-			stream->w = STREAM_MAX_W;
+		// Gradually narrow the stream to match the bridge
+		if (stream->w > STREAM_MIN_W) {
+			stream->w--;
+			stream->bridge_done = 0;
 		}
 	}
+}
 
-	// Update X coord
-	if (stream->w > STREAM_MIN_W && !(rand() & 0x03)) {
-		if (rand() & 0x80) {
-			stream->x--;
-		} else {
-			stream->x++;
-		}		
-	}
-
-	if (stream->x < 1) {
-		stream->x = 1;
-	} else if (stream->x + stream->w > MAP_W - 1) {
-		stream->x = MAP_W - stream->w - 1;
-	}
+int random_speed(int base) {
+	return rand() & 0x80 ? base : -base;
 }
 
 void generate_map_row(char *buffer) {
@@ -143,8 +227,29 @@ void generate_map_row(char *buffer) {
 		d++;
 	}
 	
+	if (map_data.rows_for_level) map_data.rows_for_level--;	
+	
 	update_river_stream(buffer, &map_data.stream1);
 	update_river_stream(buffer, &map_data.stream2);
+	
+	// Prepared the bridge? Draw bridge tiles.
+	if (!map_data.rows_for_level && map_data.stream1.bridge_done && map_data.stream2.bridge_done) {
+		d = buffer;
+		for (remaining = MAP_W; remaining; remaining--) {
+			if (*d == TILE_LAND) {
+				*d = TILE_BRIDGE;
+			}
+			d++;
+		}
+
+		actor *enm = find_free_enemy();		
+		if (enm) {
+			int enm_x = BRIDGE_LEFT << 4;
+			init_actor(enm, enm_x, -16, BRIDGE_WIDTH << 1, 1, ENEMY_TILE_BRIDGE, 1);
+		}
+
+		map_data.rows_for_level = LEVEL_LENGTH;	
+	}
 	
 	prev = buffer;
 	d = buffer + 1;
@@ -167,14 +272,28 @@ void generate_map_row(char *buffer) {
 			switch (rand() & 0x03) {
 			case 0:
 				init_actor(enm, enm_x, 0, 4, 1, ENEMY_TILE_SHIP, 1);
+				set_min_max_x_to_margins(enm);
+				set_enemy_collision(enm);
+				enm->spd_x = random_speed(1);
 				break;
 				
 			case 1:
 				init_actor(enm, enm_x, 0, 3, 1, ENEMY_TILE_HELI, 1);
+				set_min_max_x_to_margins(enm);
+				set_enemy_collision(enm);
+				enm->spd_x = random_speed(1);
 				break;
-				
+
 			case 2:
-				init_actor(enm, enm_x, 0, 3, 1, ENEMY_TILE_PLANE, 1);
+				init_actor(enm, 0, 0, 4, 1, ENEMY_TILE_PLANE, 1);
+				set_enemy_collision(enm);
+				enm->spd_x = random_speed(2);
+				if (enm->spd_x < 0) enm->x = 256 - enm->pixel_w;
+				break;
+
+			case 3:
+				init_actor(enm, enm_x, 0, 1, 2, ENEMY_TILE_FUEL, 1);
+				set_fuel_collision(enm);
 				break;
 			}
 		}
@@ -238,5 +357,5 @@ void draw_map() {
 		map_data.scroll_y = SCROLL_H - 1;
 	}
 
-	move_enemies();
+	scroll_enemies();
 }

@@ -43,18 +43,20 @@ typedef struct actor {
 	char active;
 	
 	int x, y;
+
+	int spd_x;
+	int min_x, max_x;
 	
 	char facing_left;
 	
 	char char_w, char_h;
 	char pixel_w, pixel_h;
 	
+	char type;
+	
 	unsigned char animation_delay, animation_delay_max;
 	unsigned char base_tile, frame_count;
 	unsigned char frame, frame_increment, frame_max;
-	
-	char path_flags;
-	path_step *path, *curr_step;
 	
 	unsigned char state;
 	int state_timer;
@@ -69,5 +71,7 @@ void draw_actor(actor *act);
 
 void wait_frames(int wait_time);
 void clear_sprites();
+
+char is_touching(actor *act1, actor *act2);
 
 #endif /* ACTOR_H */

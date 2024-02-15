@@ -5,22 +5,26 @@
 #include "lib/PSGlib.h"
 #include "actor.h"
 #include "map.h"
+#include "status.h"
 #include "data.h"
 
 #define PLAYER_TOP (0)
 #define PLAYER_LEFT (0)
 #define PLAYER_RIGHT (256 - 16)
 #define PLAYER_BOTTOM (SCREEN_H - 16)
-#define PLAYER_SPEED (3)
+#define PLAYER_SPEED (1)
 #define PLAYER_MIN_SPEED (0x080)
 #define PLAYER_MED_SPEED (0x100)
-#define PLAYER_MAX_SPEED (0x200)
+#define PLAYER_MAX_SPEED (0x250)
+#define PLAYER_SHOT_SPEED (5)
 #define PLAYER_NEUTRAL_TILE (8)
 #define PLAYER_CRASHING_TILE (PLAYER_NEUTRAL_TILE + 64)
+#define PLAYER_SHOT_TILE (18)
 #define PLAYER_DEATH_DELAY (90)
 #define PLAYER_CRASHING_COUNTDOWN (60)
 
 actor player;
+actor shot;
 
 struct ply_ctl {
 	char crashing_countdown;
@@ -60,11 +64,19 @@ void handle_player_input() {
 
 	ply_ctl.speed.w = PLAYER_MED_SPEED;
 	if (joy & PORT_A_KEY_UP) {
-		if (player.y > PLAYER_TOP) ply_ctl.speed.w = PLAYER_MAX_SPEED;
+		ply_ctl.speed.w = PLAYER_MAX_SPEED;
 	} else if (joy & PORT_A_KEY_DOWN) {
-		if (player.y < PLAYER_BOTTOM) ply_ctl.speed.w = PLAYER_MIN_SPEED;
+		ply_ctl.speed.w = PLAYER_MIN_SPEED;
 	}
 	
+	if (joy & (PORT_A_KEY_1 | PORT_A_KEY_2)) {
+		if (!shot.active) {
+			shot.x = player.x + 4;
+			shot.y = player.y - 12;
+			shot.active = 1;
+		}
+	}
+
 	if (ply_ctl.death_delay) ply_ctl.death_delay--;
 }
 
@@ -72,20 +84,32 @@ void draw_player() {
 	if (!(ply_ctl.death_delay & 0x08)) draw_actor(&player);
 }
 
-char is_colliding_against_player(actor *_act) {
-	static actor *act;
-	static int act_x, act_y;
+void move_shot() {
+	shot.y -= PLAYER_SHOT_SPEED;
+	if (shot.y < 0) shot.active = 0;
+}
+
+void draw_shot() {
+	draw_actor(&shot);
+}
+
+void check_player_enemy_collision() {
+	actor *enm = find_colliding_enemy(&player);
+	if (!enm) return;
 	
-	act = _act;
-	act_x = act->x;
-	act_y = act->y;
-	
-	if (player.x > act_x - 12 && player.x < act_x + 12 &&
-		player.y > act_y - 12 && player.y < act_y + 12) {
-		return 1;
+	if (enm->type == ENEMY_TILE_FUEL) {
+	} else {
+		// Other enemies kill the player
+		ply_ctl.death_delay = PLAYER_DEATH_DELAY;
 	}
-	
-	return 0;
+}
+
+void check_shot_enemy_collision() {
+	actor *enm = find_colliding_enemy(&shot);
+	if (enm) {
+		enm->active = 0;
+		shot.active = 0;
+	}
 }
 
 void draw_background() {
@@ -126,9 +150,9 @@ void draw_collision() {
 	px = player.x + 8;
 	get_margins(&left, &right, px, player.y + 8);
 	
-	/*	
-	SMS_addSprite(left, player.y, 16);
-	SMS_addSprite(right, player.y, 16);
+	/*
+	SMS_addSprite(left, player.y + 8, 16);
+	SMS_addSprite(right, player.y + 8, 16);]
 	*/
 	
 	player.base_tile = PLAYER_NEUTRAL_TILE;
@@ -175,14 +199,25 @@ void gameplay_loop() {
 	ply_ctl.speed.w = PLAYER_MED_SPEED;
 	ply_ctl.displacement.w = 0;
 	
+	init_actor(&shot, 0, 0, 1, 1, PLAYER_SHOT_TILE, 1);
+	shot.active = 0;
+	
+	init_enemies();
+
 	while (1) {	
 		handle_player_input();
-		
+		move_shot();
+		move_enemies();
+		check_player_enemy_collision();
+		check_shot_enemy_collision();
+
 		SMS_initSprites();
 
 		draw_collision();
 		draw_player();
 		draw_enemies();
+		draw_shot();
+		draw_fuel_gauge();
 		
 		SMS_finalizeSprites();
 		SMS_waitForVBlank();
@@ -204,7 +239,8 @@ void main() {
 }
 
 SMS_EMBED_SEGA_ROM_HEADER(9999,0); // code 9999 hopefully free, here this means 'homebrew'
-SMS_EMBED_SDSC_HEADER(0,2, 2024,1,22, "Haroldo-OK\\2024", "River Strike (Initial prototype)",
+SMS_EMBED_SDSC_HEADER(0,4, 2024,2,14, "Haroldo-OK\\2024", "River Strike (Initial prototype)",
   "A River Raid Clone.\n"
   "Originally made for the Minigame a Month - JANUARY 2024 - Water - https://itch.io/jam/minigame-a-month-january-2024\n"
+  "Vastly improved for the SMS Power Coding Competition 2024 - https://www.smspower.org/forums/19973-Competitions2024\n"
   "Built using devkitSMS & SMSlib - https://github.com/sverx/devkitSMS");

@@ -11,6 +11,7 @@
 #define STREAM_MAX_W (5)
 #define TILE_WATER (4)
 #define TILE_LAND (17)
+#define TILE_BRIDGE (5)
 
 #define LEVEL_LENGTH (16)
 #define BRIDGE_LEFT (7)
@@ -230,7 +231,16 @@ void generate_map_row(char *buffer) {
 	update_river_stream(buffer, &map_data.stream1);
 	update_river_stream(buffer, &map_data.stream2);
 	
+	// Prepared the bridge? Draw bridge tiles.
 	if (!map_data.rows_for_level && map_data.stream1.bridge_done && map_data.stream2.bridge_done) {
+		d = buffer;
+		for (remaining = MAP_W; remaining; remaining--) {
+			if (*d == TILE_LAND) {
+				*d = TILE_BRIDGE;
+			}
+			d++;
+		}
+
 		map_data.rows_for_level = LEVEL_LENGTH;	
 	}
 	

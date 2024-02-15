@@ -8,3 +8,4 @@
 * Background: https://opengameart.org/content/remastered-tyrian-graphics-0
 * Player jet: https://opengameart.org/content/vertical-shmup-set-2-m484-games
 * Enemy ships and helicopters: https://opengameart.org/content/war-on-water-gfx
+* Fuel gauge: https://opengameart.org/content/top-down-arcade-racing-game

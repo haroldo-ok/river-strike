@@ -5,6 +5,7 @@
 #define ENEMY_TILE_HELI (146)
 #define ENEMY_TILE_PLANE (158)
 #define ENEMY_TILE_FUEL (20)
+#define ENEMY_TILE_BRIDGE (86)
 
 void init_map(void *level_data);
 void draw_map_screen();

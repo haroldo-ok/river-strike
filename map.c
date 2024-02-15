@@ -15,6 +15,7 @@
 
 #define LEVEL_LENGTH (16)
 #define BRIDGE_LEFT (7)
+#define BRIDGE_WIDTH (STREAM_MIN_W)
 
 typedef struct river_stream {
 	char x, w;
@@ -239,6 +240,12 @@ void generate_map_row(char *buffer) {
 				*d = TILE_BRIDGE;
 			}
 			d++;
+		}
+
+		actor *enm = find_free_enemy();		
+		if (enm) {
+			int enm_x = BRIDGE_LEFT << 4;
+			init_actor(enm, enm_x, -16, BRIDGE_WIDTH << 1, 1, ENEMY_TILE_BRIDGE, 1);
 		}
 
 		map_data.rows_for_level = LEVEL_LENGTH;	

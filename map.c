@@ -13,7 +13,7 @@
 #define TILE_LAND (17)
 #define TILE_BRIDGE (5)
 
-#define LEVEL_LENGTH (16)
+#define LEVEL_LENGTH (128)
 #define BRIDGE_LEFT (7)
 #define BRIDGE_WIDTH (STREAM_MIN_W)
 
@@ -193,21 +193,25 @@ void update_river_stream(char *buffer, river_stream *stream) {
 	} else {
 		// Level is ending: create space for the bridge.
 		
-		stream->bridge_done = 1;
+		stream->bridge_done = stream->x == BRIDGE_LEFT && stream->w == STREAM_MIN_W;
 		
 		// Gradually shift the stream towards the bridge
-		if (stream->x < BRIDGE_LEFT) {
-			stream->x++;
-			stream->bridge_done = 0;
-		} else if (stream->x > BRIDGE_LEFT) {
-			stream->x--;
-			stream->bridge_done = 0;
+		if (rand() & 0x80) {
+			if (stream->x < BRIDGE_LEFT) {
+				stream->x++;
+				stream->bridge_done = 0;
+			} else if (stream->x > BRIDGE_LEFT) {
+				stream->x--;
+				stream->bridge_done = 0;
+			}
 		}
 		
 		// Gradually narrow the stream to match the bridge
-		if (stream->w > STREAM_MIN_W) {
-			stream->w--;
-			stream->bridge_done = 0;
+		if (rand() & 0x80) {
+			if (stream->w > STREAM_MIN_W) {
+				stream->w--;
+				stream->bridge_done = 0;
+			}
 		}
 	}
 }

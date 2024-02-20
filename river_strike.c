@@ -183,7 +183,7 @@ void gameplay_loop() {
 	SMS_loadPSGaidencompressedTiles(tileset_tiles_psgcompr, 256);
 	load_standard_palettes();
 	
-	init_map(level1_bin);
+	init_map(0);
 	draw_map_screen();
 
 	SMS_setLineInterruptHandler(&interrupt_handler);

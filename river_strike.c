@@ -172,6 +172,8 @@ void draw_collision() {
 }
 
 void gameplay_loop() {	
+	static char engine_sound_countdown;
+
 	srand(1234);
 
 	SMS_useFirstHalfTilesforSprites(1);
@@ -203,6 +205,8 @@ void gameplay_loop() {
 	shot.active = 0;
 	
 	init_enemies();
+	
+	engine_sound_countdown = 0;
 
 	while (1) {	
 		handle_player_input();
@@ -210,6 +214,13 @@ void gameplay_loop() {
 		move_enemies();
 		check_player_enemy_collision();
 		check_shot_enemy_collision();
+		
+		if (engine_sound_countdown) {
+			engine_sound_countdown--;
+		} else {
+			PSGSFXPlay(engine_normal_psg, SFX_CHANNELS2AND3);
+			engine_sound_countdown = 32;
+		}
 
 		SMS_initSprites();
 

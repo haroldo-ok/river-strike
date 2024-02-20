@@ -76,6 +76,7 @@ void handle_player_input() {
 			shot.x = player.x + 4;
 			shot.y = player.y - 12;
 			shot.active = 1;
+			PSGPlayNoRepeat(shot_psg);
 		}
 	}
 
@@ -224,11 +225,13 @@ void gameplay_loop() {
 		if (engine_sound_countdown) {
 			engine_sound_countdown--;
 		} else {
+			/*
 			PSGSFXPlay(
 				ply_ctl.speed.w == PLAYER_MAX_SPEED ? engine_fast_psg :
 				ply_ctl.speed.w == PLAYER_MIN_SPEED ? engine_slow_psg :
 				engine_normal_psg, 
 				SFX_CHANNELS2AND3);
+				*/
 			engine_sound_countdown = 32;
 		}
 

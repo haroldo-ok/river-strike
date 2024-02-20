@@ -29,10 +29,12 @@ actor shot;
 struct ply_ctl {
 	char crashing_countdown;
 	char death_delay;
-	fixed speed, displacement;
+	fixed speed, displacement, prev_speed;
 } ply_ctl;
 
 char frames_elapsed;
+
+char engine_sound_countdown;
 
 void load_standard_palettes() {
 	SMS_loadBGPalette(tileset_palette_bin);
@@ -172,8 +174,6 @@ void draw_collision() {
 }
 
 void gameplay_loop() {	
-	static char engine_sound_countdown;
-
 	srand(1234);
 
 	SMS_useFirstHalfTilesforSprites(1);
@@ -200,6 +200,7 @@ void gameplay_loop() {
 	ply_ctl.death_delay = 0;
 	ply_ctl.speed.w = PLAYER_MED_SPEED;
 	ply_ctl.displacement.w = 0;
+	ply_ctl.prev_speed.w = 0;
 	
 	init_actor(&shot, 0, 0, 1, 1, PLAYER_SHOT_TILE, 1);
 	shot.active = 0;
@@ -214,11 +215,20 @@ void gameplay_loop() {
 		move_enemies();
 		check_player_enemy_collision();
 		check_shot_enemy_collision();
+
+		if (ply_ctl.prev_speed.w != ply_ctl.speed.w) {
+			ply_ctl.prev_speed.w = ply_ctl.speed.w;
+			engine_sound_countdown = 0;
+		}
 		
 		if (engine_sound_countdown) {
 			engine_sound_countdown--;
 		} else {
-			PSGSFXPlay(engine_normal_psg, SFX_CHANNELS2AND3);
+			PSGSFXPlay(
+				ply_ctl.speed.w == PLAYER_MAX_SPEED ? engine_fast_psg :
+				ply_ctl.speed.w == PLAYER_MIN_SPEED ? engine_slow_psg :
+				engine_normal_psg, 
+				SFX_CHANNELS2AND3);
 			engine_sound_countdown = 32;
 		}
 

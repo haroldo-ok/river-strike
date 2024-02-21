@@ -29,10 +29,12 @@ actor shot;
 struct ply_ctl {
 	char crashing_countdown;
 	char death_delay;
-	fixed speed, displacement;
+	fixed speed, displacement, prev_speed;
 } ply_ctl;
 
 char frames_elapsed;
+
+char engine_sound_countdown;
 
 void load_standard_palettes() {
 	SMS_loadBGPalette(tileset_palette_bin);
@@ -74,6 +76,8 @@ void handle_player_input() {
 			shot.x = player.x + 4;
 			shot.y = player.y - 12;
 			shot.active = 1;
+			
+			PSGPlayNoRepeat(shot_psg);
 		}
 	}
 
@@ -109,6 +113,9 @@ void check_shot_enemy_collision() {
 	if (enm) {
 		enm->active = 0;
 		shot.active = 0;
+
+		PSGSFXPlay(explosion_psg, SFX_CHANNELS2AND3);
+		engine_sound_countdown = 32;
 	}
 }
 
@@ -183,7 +190,7 @@ void gameplay_loop() {
 	SMS_loadPSGaidencompressedTiles(tileset_tiles_psgcompr, 256);
 	load_standard_palettes();
 	
-	init_map(level1_bin);
+	init_map(0);
 	draw_map_screen();
 
 	SMS_setLineInterruptHandler(&interrupt_handler);
@@ -198,18 +205,37 @@ void gameplay_loop() {
 	ply_ctl.death_delay = 0;
 	ply_ctl.speed.w = PLAYER_MED_SPEED;
 	ply_ctl.displacement.w = 0;
+	ply_ctl.prev_speed.w = 0;
 	
 	init_actor(&shot, 0, 0, 1, 1, PLAYER_SHOT_TILE, 1);
 	shot.active = 0;
 	
 	init_enemies();
-
+	
+	engine_sound_countdown = 0;
+	
 	while (1) {	
 		handle_player_input();
 		move_shot();
 		move_enemies();
 		check_player_enemy_collision();
 		check_shot_enemy_collision();
+
+		if (ply_ctl.prev_speed.w != ply_ctl.speed.w) {
+			ply_ctl.prev_speed.w = ply_ctl.speed.w;
+			engine_sound_countdown = 0;
+		}
+		
+		if (engine_sound_countdown) {
+			engine_sound_countdown--;
+		} else {
+			PSGSFXPlay(
+				ply_ctl.speed.w == PLAYER_MAX_SPEED ? engine_fast_psg :
+				ply_ctl.speed.w == PLAYER_MIN_SPEED ? engine_slow_psg :
+				engine_normal_psg, 
+				SFX_CHANNELS2AND3);
+			engine_sound_countdown = 32;
+		}
 
 		SMS_initSprites();
 
@@ -239,7 +265,7 @@ void main() {
 }
 
 SMS_EMBED_SEGA_ROM_HEADER(9999,0); // code 9999 hopefully free, here this means 'homebrew'
-SMS_EMBED_SDSC_HEADER(0,4, 2024,2,15, "Haroldo-OK\\2024", "River Strike (Initial prototype)",
+SMS_EMBED_SDSC_HEADER(0,5, 2024,2,21, "Haroldo-OK\\2024", "River Strike (Initial prototype)",
   "A River Raid Clone.\n"
   "Originally made for the Minigame a Month - JANUARY 2024 - Water - https://itch.io/jam/minigame-a-month-january-2024\n"
   "Vastly improved for the SMS Power Coding Competition 2024 - https://www.smspower.org/forums/19973-Competitions2024\n"

@@ -113,6 +113,9 @@ void check_shot_enemy_collision() {
 	if (enm) {
 		enm->active = 0;
 		shot.active = 0;
+
+		PSGSFXPlay(explosion_psg, SFX_CHANNELS2AND3);
+		engine_sound_countdown = 32;
 	}
 }
 

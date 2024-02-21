@@ -4,7 +4,7 @@ OBJS := data.rel actor.rel map.rel score.rel status.rel river_strike.rel
 all: $(PRJNAME).sms
 
 data.c: data/* data/sprites_tiles.psgcompr data/tileset_tiles.psgcompr data/background_tiles.psgcompr \
-		data/engine_fast.psg data/engine_normal.psg data/engine_slow.psg data/fueling.psg data/shot.psg
+		data/engine_fast.psg data/engine_normal.psg data/engine_slow.psg data/fueling.psg data/shot.psg data/explosion.psg
 	folder2c data data
 	
 data/sprites_tiles.psgcompr: data/img/sprites.png

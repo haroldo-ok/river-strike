@@ -77,7 +77,7 @@ void handle_player_input() {
 			shot.y = player.y - 12;
 			shot.active = 1;
 			
-			PSGPlayNoRepeat(player_shot_psg);
+			PSGPlayNoRepeat(shot_psg);
 		}
 	}
 

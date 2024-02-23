@@ -30,6 +30,7 @@ struct ply_ctl {
 	char crashing_countdown;
 	char death_delay;
 	fixed speed, displacement, prev_speed;
+	char was_refuelling;
 } ply_ctl;
 
 char frames_elapsed;
@@ -99,12 +100,21 @@ void draw_shot() {
 
 void check_player_enemy_collision() {
 	actor *enm = find_colliding_enemy(&player);
-	if (!enm) return;
+	if (!enm) {
+		if (ply_ctl.was_refuelling) PSGStop();
+		ply_ctl.was_refuelling = 0;
+		return;
+	}
 	
 	if (enm->type == ENEMY_TILE_FUEL) {
+		// Refuel player
+		increase_fuel_gauge();
+		
+		if (!ply_ctl.was_refuelling) PSGPlayNoRepeat(fueling_psg);
+		ply_ctl.was_refuelling = 1;
 	} else {
 		// Other enemies kill the player
-		ply_ctl.death_delay = PLAYER_DEATH_DELAY;
+		ply_ctl.death_delay = PLAYER_DEATH_DELAY;		
 	}
 }
 
@@ -206,6 +216,7 @@ void gameplay_loop() {
 	ply_ctl.speed.w = PLAYER_MED_SPEED;
 	ply_ctl.displacement.w = 0;
 	ply_ctl.prev_speed.w = 0;
+	ply_ctl.was_refuelling = 0;
 	
 	init_actor(&shot, 0, 0, 1, 1, PLAYER_SHOT_TILE, 1);
 	shot.active = 0;

@@ -102,6 +102,8 @@ void check_player_enemy_collision() {
 	if (!enm) return;
 	
 	if (enm->type == ENEMY_TILE_FUEL) {
+		// Refuel player
+		increase_fuel_gauge();
 	} else {
 		// Other enemies kill the player
 		ply_ctl.death_delay = PLAYER_DEATH_DELAY;

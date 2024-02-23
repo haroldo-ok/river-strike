@@ -12,6 +12,7 @@
 #define FUEL_STEPS (48)
 #define FUEL_MAX (FUEL_STEPS << 8)
 #define FUEL_DECREMENT (0x06)
+#define FUEL_INCREMENT (0x40)
 
 struct fuel_ctl {
 	fixed amount, prev_amount;
@@ -22,6 +23,11 @@ void init_fuel_gauge() {
 	fuel_ctl.amount.w = FUEL_MAX;
 	fuel_ctl.prev_amount.w = 0;
 	fuel_ctl.dirty = 1;
+}
+
+void increase_fuel_gauge() {
+	fuel_ctl.amount.w += FUEL_INCREMENT;
+	if (fuel_ctl.amount.w > FUEL_MAX) fuel_ctl.amount.w = FUEL_MAX;
 }
 
 void handle_fuel_gauge() {

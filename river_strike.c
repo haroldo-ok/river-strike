@@ -211,6 +211,7 @@ void gameplay_loop() {
 	shot.active = 0;
 	
 	init_enemies();
+	init_fuel_gauge();
 	
 	engine_sound_countdown = 0;
 	
@@ -220,6 +221,8 @@ void gameplay_loop() {
 		move_enemies();
 		check_player_enemy_collision();
 		check_shot_enemy_collision();
+		
+		handle_fuel_gauge();
 
 		if (ply_ctl.prev_speed.w != ply_ctl.speed.w) {
 			ply_ctl.prev_speed.w = ply_ctl.speed.w;

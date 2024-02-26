@@ -129,24 +129,6 @@ void check_shot_enemy_collision() {
 	}
 }
 
-void draw_background() {
-	unsigned int *ch = background_tilemap_bin;
-	
-	SMS_setNextTileatXY(0, 0);
-	for (char y = 0; y != 30; y++) {
-		// Repeat pattern every two lines
-		if (!(y & 0x01)) {
-			ch = background_tilemap_bin;
-		}
-		
-		for (char x = 0; x != 32; x++) {
-			unsigned int tile_number = *ch + 256;
-			SMS_setTile(tile_number);
-			ch++;
-		}
-	}
-}
-
 void clear_tilemap() {
 	SMS_setNextTileatXY(0, 0);
 	for (int i = (SCREEN_CHAR_W * SCROLL_CHAR_H); i; i--) {
@@ -188,14 +170,35 @@ void draw_collision() {
 	}
 }
 
+void title_screen() {
+	SMS_displayOff();
+
+	SMS_useFirstHalfTilesforSprites(1);
+	SMS_setSpriteMode(SPRITEMODE_NORMAL);
+	SMS_VDPturnOffFeature(VDPFEATURE_HIDEFIRSTCOL);
+
+	SMS_setBGScrollX(0);
+	SMS_setBGScrollY(0);
+
+	SMS_loadPSGaidencompressedTiles(title_tiles_psgcompr, 0);
+	SMS_loadBGPalette(title_palette_bin);
+	SMS_loadTileMapArea(0, 0, title_tilemap_bin, SCREEN_CHAR_W, SCREEN_CHAR_H);
+
+	SMS_displayOn();
+	
+	wait_button_press();
+	wait_button_release();
+}
+
 void gameplay_loop() {	
 	srand(1234);
+
+	SMS_displayOff();
 
 	SMS_useFirstHalfTilesforSprites(1);
 	SMS_setSpriteMode(SPRITEMODE_TALL);
 	SMS_VDPturnOnFeature(VDPFEATURE_HIDEFIRSTCOL);
 
-	SMS_displayOff();
 	SMS_loadPSGaidencompressedTiles(sprites_tiles_psgcompr, 0);
 	SMS_loadPSGaidencompressedTiles(tileset_tiles_psgcompr, 256);
 	load_standard_palettes();
@@ -274,6 +277,7 @@ void gameplay_loop() {
 
 void main() {	
 	while (1) {
+		title_screen();
 		gameplay_loop();
 	}
 }

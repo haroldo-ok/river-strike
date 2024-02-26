@@ -3,7 +3,7 @@ OBJS := data.rel actor.rel map.rel score.rel status.rel river_strike.rel
 
 all: $(PRJNAME).sms
 
-data.c: data/* data/sprites_tiles.psgcompr data/tileset_tiles.psgcompr data/background_tiles.psgcompr \
+data.c: data/* data/sprites_tiles.psgcompr data/tileset_tiles.psgcompr data/title_tiles.psgcompr \
 		data/gauge_tiles.bin \
 		data/engine_fast.psg data/engine_normal.psg data/engine_slow.psg data/fueling.psg data/shot.psg data/explosion.psg
 	folder2c data data
@@ -17,8 +17,8 @@ data/gauge_tiles.bin: data/img/gauge.png
 data/tileset_tiles.psgcompr: data/img/tileset.png
 	BMP2Tile.exe data/img/tileset.png -noremovedupes -8x16 -palsms -fullpalette -savetiles data/tileset_tiles.psgcompr -savepalette data/tileset_palette.bin
 
-data/background_tiles.psgcompr: data/img/background.png
-	BMP2Tile.exe data/img/background.png -palsms -fullpalette -savetiles data/background_tiles.psgcompr -savetilemap data/background_tilemap.bin -savepalette data/background_palette.bin
+data/title_tiles.psgcompr: data/img/title.png
+	BMP2Tile.exe data/img/title.png -palsms -fullpalette -savetiles data/title_tiles.psgcompr -savetilemap data/title_tilemap.bin -savepalette data/title_palette.bin
 
 data/%.path: data/path/%.spline.json
 	node tool/convert_splines.js $< $@

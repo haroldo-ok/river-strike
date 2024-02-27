@@ -122,6 +122,8 @@ void check_player_enemy_collision() {
 }
 
 void check_shot_enemy_collision() {
+	if (!shot.active) return;
+	
 	actor *enm = find_colliding_enemy(&shot);
 	if (enm) {
 		enm->active = 0;

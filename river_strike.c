@@ -128,6 +128,8 @@ void check_shot_enemy_collision() {
 	if (enm) {
 		enm->active = 0;
 		shot.active = 0;
+		
+		increment_score_display(&score, 5);
 
 		PSGSFXPlay(explosion_psg, SFX_CHANNELS2AND3);
 		engine_sound_countdown = 32;
@@ -232,7 +234,6 @@ void gameplay_loop() {
 	init_enemies();
 	init_fuel_gauge();
 	init_score_display(&score, 16, PLAYER_BOTTOM + 2, 192);
-	update_score_display(&score, 12345);
 	
 	engine_sound_countdown = 0;
 	

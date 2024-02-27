@@ -6,6 +6,7 @@
 #include "actor.h"
 #include "map.h"
 #include "status.h"
+#include "score.h"
 #include "data.h"
 
 #define PLAYER_TOP (0)
@@ -25,6 +26,8 @@
 
 actor player;
 actor shot;
+
+score_display score;
 
 struct ply_ctl {
 	char crashing_countdown;
@@ -119,10 +122,14 @@ void check_player_enemy_collision() {
 }
 
 void check_shot_enemy_collision() {
+	if (!shot.active) return;
+	
 	actor *enm = find_colliding_enemy(&shot);
 	if (enm) {
 		enm->active = 0;
 		shot.active = 0;
+		
+		increment_score_display(&score, 5);
 
 		PSGSFXPlay(explosion_psg, SFX_CHANNELS2AND3);
 		engine_sound_countdown = 32;
@@ -226,6 +233,7 @@ void gameplay_loop() {
 	
 	init_enemies();
 	init_fuel_gauge();
+	init_score_display(&score, 16, PLAYER_BOTTOM + 2, 192);
 	
 	engine_sound_countdown = 0;
 	
@@ -261,6 +269,7 @@ void gameplay_loop() {
 		draw_enemies();
 		draw_shot();
 		draw_fuel_gauge();
+		draw_score_display(&score);
 		
 		SMS_finalizeSprites();
 		SMS_waitForVBlank();
@@ -269,7 +278,7 @@ void gameplay_loop() {
 		// Scroll map lines according to speed
 		ply_ctl.displacement.w += ply_ctl.speed.w;
 		for (char linesToScroll = ply_ctl.displacement.b.h; linesToScroll; linesToScroll--) {
-			draw_map();		
+			draw_map();
 		}
 		ply_ctl.displacement.b.h = 0;
 	}

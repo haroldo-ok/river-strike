@@ -21,7 +21,7 @@
 #define PLAYER_NEUTRAL_TILE (8)
 #define PLAYER_CRASHING_TILE (PLAYER_NEUTRAL_TILE + 64)
 #define PLAYER_SHOT_TILE (18)
-#define PLAYER_DEATH_DELAY (90)
+#define PLAYER_DEATH_DELAY (2)
 #define PLAYER_CRASHING_COUNTDOWN (60)
 
 actor player;
@@ -85,11 +85,21 @@ void handle_player_input() {
 		}
 	}
 
-	if (ply_ctl.death_delay) ply_ctl.death_delay--;
+	if (ply_ctl.death_delay) {
+		if (ply_ctl.death_delay == 1) player.active = 0;
+		ply_ctl.death_delay--;
+	}
+}
+
+void kill_player() {
+	ply_ctl.death_delay = PLAYER_DEATH_DELAY;
+
+	PSGSFXPlay(explosion_psg, SFX_CHANNELS2AND3);
+	engine_sound_countdown = 32;
 }
 
 void draw_player() {
-	if (!(ply_ctl.death_delay & 0x08)) draw_actor(&player);
+	draw_actor(&player);
 }
 
 void move_shot() {
@@ -117,7 +127,7 @@ void check_player_enemy_collision() {
 		ply_ctl.was_refuelling = 1;
 	} else {
 		// Other enemies kill the player
-		ply_ctl.death_delay = PLAYER_DEATH_DELAY;		
+		kill_player();
 	}
 }
 
@@ -167,7 +177,7 @@ void draw_collision() {
 		if (!ply_ctl.death_delay) {
 			if (ply_ctl.crashing_countdown) {
 				ply_ctl.crashing_countdown--;
-				if (!ply_ctl.death_delay) ply_ctl.death_delay = PLAYER_DEATH_DELAY;
+				if (!ply_ctl.death_delay) kill_player();
 			} else {
 				ply_ctl.crashing_countdown = PLAYER_CRASHING_COUNTDOWN;
 			}
@@ -181,7 +191,7 @@ void title_screen() {
 	SMS_displayOff();
 
 	SMS_useFirstHalfTilesforSprites(1);
-	SMS_setSpriteMode(SPRITEMODE_NORMAL);
+	SMS_setSpriteMode(SPRITEMODE_TALL);
 	SMS_VDPturnOffFeature(VDPFEATURE_HIDEFIRSTCOL);
 
 	SMS_setBGScrollX(0);
@@ -190,6 +200,8 @@ void title_screen() {
 	SMS_loadPSGaidencompressedTiles(title_tiles_psgcompr, 0);
 	SMS_loadBGPalette(title_palette_bin);
 	SMS_loadTileMapArea(0, 0, title_tilemap_bin, SCREEN_CHAR_W, SCREEN_CHAR_H);
+
+	clear_sprites();
 
 	SMS_displayOn();
 	
@@ -237,7 +249,7 @@ void gameplay_loop() {
 	
 	engine_sound_countdown = 0;
 	
-	while (1) {	
+	while (player.active) {	
 		handle_player_input();
 		move_shot();
 		move_enemies();

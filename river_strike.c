@@ -199,6 +199,10 @@ void init_life_counter() {
 	update_score_display(&life, 3);
 }
 
+void decrement_life_counter() {
+	increment_score_display(&life, -1);
+}
+
 void draw_life_counter() {
 	SMS_addSprite(16, PLAYER_BOTTOM - 32, 212);	
 	draw_score_display(&life);
@@ -250,72 +254,77 @@ void gameplay_loop() {
 	SMS_enableLineInterrupt();
 
 	SMS_displayOn();
-	
-	init_actor(&player, 116, PLAYER_BOTTOM - 16, 2, 1, PLAYER_NEUTRAL_TILE, 1);
-	player.animation_delay = 20;
-	ply_ctl.crashing_countdown = 0;
-	ply_ctl.death_delay = 0;
-	ply_ctl.speed.w = PLAYER_MED_SPEED;
-	ply_ctl.displacement.w = 0;
-	ply_ctl.prev_speed.w = 0;
-	ply_ctl.was_refuelling = 0;
-	
-	init_actor(&shot, 0, 0, 1, 1, PLAYER_SHOT_TILE, 1);
-	shot.active = 0;
-	
-	init_enemies();
-	init_fuel_gauge();
-	init_score_display(&score, 16, PLAYER_BOTTOM + 2, SCORE_TILE);
+
 	init_life_counter();
-	
-	engine_sound_countdown = 0;
-	
-	while (player.active) {	
-		handle_player_input();
-		move_shot();
-		move_enemies();
-		check_player_enemy_collision();
-		check_shot_enemy_collision();
+	while (life.value) {
+		init_actor(&player, 116, PLAYER_BOTTOM - 16, 2, 1, PLAYER_NEUTRAL_TILE, 1);
+		player.animation_delay = 20;
+		ply_ctl.crashing_countdown = 0;
+		ply_ctl.death_delay = 0;
+		ply_ctl.speed.w = PLAYER_MED_SPEED;
+		ply_ctl.displacement.w = 0;
+		ply_ctl.prev_speed.w = 0;
+		ply_ctl.was_refuelling = 0;
 		
-		handle_fuel_gauge();
+		init_actor(&shot, 0, 0, 1, 1, PLAYER_SHOT_TILE, 1);
+		shot.active = 0;
+		
+		init_enemies();
+		init_fuel_gauge();
+		init_score_display(&score, 16, PLAYER_BOTTOM + 2, SCORE_TILE);
+		
+		engine_sound_countdown = 0;
+		
+		while (player.active) {	
+			handle_player_input();
+			move_shot();
+			move_enemies();
+			check_player_enemy_collision();
+			check_shot_enemy_collision();
+			
+			handle_fuel_gauge();
 
-		if (ply_ctl.prev_speed.w != ply_ctl.speed.w) {
-			ply_ctl.prev_speed.w = ply_ctl.speed.w;
-			engine_sound_countdown = 0;
+			if (ply_ctl.prev_speed.w != ply_ctl.speed.w) {
+				ply_ctl.prev_speed.w = ply_ctl.speed.w;
+				engine_sound_countdown = 0;
+			}
+			
+			if (engine_sound_countdown) {
+				engine_sound_countdown--;
+			} else {
+				PSGSFXPlay(
+					ply_ctl.speed.w == PLAYER_MAX_SPEED ? engine_fast_psg :
+					ply_ctl.speed.w == PLAYER_MIN_SPEED ? engine_slow_psg :
+					engine_normal_psg, 
+					SFX_CHANNELS2AND3);
+				engine_sound_countdown = 32;
+			}
+
+			SMS_initSprites();
+
+			draw_collision();
+			draw_player();
+			draw_enemies();
+			draw_shot();
+			
+			draw_fuel_gauge();
+			draw_score_display(&score);
+			draw_life_counter();
+			
+			SMS_finalizeSprites();
+			SMS_waitForVBlank();
+			SMS_copySpritestoSAT();
+			
+			// Scroll map lines according to speed
+			ply_ctl.displacement.w += ply_ctl.speed.w;
+			for (char linesToScroll = ply_ctl.displacement.b.h; linesToScroll; linesToScroll--) {
+				draw_map();
+			}
+			ply_ctl.displacement.b.h = 0;
 		}
 		
-		if (engine_sound_countdown) {
-			engine_sound_countdown--;
-		} else {
-			PSGSFXPlay(
-				ply_ctl.speed.w == PLAYER_MAX_SPEED ? engine_fast_psg :
-				ply_ctl.speed.w == PLAYER_MIN_SPEED ? engine_slow_psg :
-				engine_normal_psg, 
-				SFX_CHANNELS2AND3);
-			engine_sound_countdown = 32;
-		}
-
-		SMS_initSprites();
-
-		draw_collision();
-		draw_player();
-		draw_enemies();
-		draw_shot();
-		
-		draw_fuel_gauge();
-		draw_score_display(&score);
-		draw_life_counter();
-		
-		SMS_finalizeSprites();
-		SMS_waitForVBlank();
-		SMS_copySpritestoSAT();
-		
-		// Scroll map lines according to speed
-		ply_ctl.displacement.w += ply_ctl.speed.w;
-		for (char linesToScroll = ply_ctl.displacement.b.h; linesToScroll; linesToScroll--) {
-			draw_map();
-		}
-		ply_ctl.displacement.b.h = 0;
+		wait_frames(60);		
+		decrement_life_counter();
 	}
 }
 

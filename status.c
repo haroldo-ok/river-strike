@@ -61,3 +61,7 @@ void draw_fuel_gauge() {
 		SMS_addSprite(FUEL_LEFT, y, tile);
 	}
 }
+
+char is_fuel_empty() {
+	return !fuel_ctl.amount.b.h;
+}

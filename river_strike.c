@@ -58,6 +58,13 @@ void wait_button_release() {
 	} while (SMS_getKeysStatus() & (PORT_A_KEY_1 | PORT_A_KEY_2));
 }
 
+void kill_player() {
+	ply_ctl.death_delay = PLAYER_DEATH_DELAY;
+
+	PSGSFXPlay(explosion_psg, SFX_CHANNELS2AND3);
+	engine_sound_countdown = 32;
+}
+
 void handle_player_input() {
 	static unsigned char joy;	
 	joy = SMS_getKeysStatus();
@@ -84,18 +91,15 @@ void handle_player_input() {
 			PSGPlayNoRepeat(shot_psg);
 		}
 	}
+	
+	if (!ply_ctl.death_delay && is_fuel_empty()) {
+		kill_player();
+	}
 
 	if (ply_ctl.death_delay) {
 		if (ply_ctl.death_delay == 1) player.active = 0;
 		ply_ctl.death_delay--;
-	}
-}
-
-void kill_player() {
-	ply_ctl.death_delay = PLAYER_DEATH_DELAY;
-
-	PSGSFXPlay(explosion_psg, SFX_CHANNELS2AND3);
-	engine_sound_countdown = 32;
+	}	
 }
 
 void draw_player() {
@@ -188,6 +192,9 @@ void draw_collision() {
 }
 
 void title_screen() {
+	PSGStop();
+	PSGSFXStop();
+	
 	SMS_displayOff();
 
 	SMS_useFirstHalfTilesforSprites(1);

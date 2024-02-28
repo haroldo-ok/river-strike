@@ -82,9 +82,7 @@ actor* find_colliding_enemy(actor *other) {
 	return 0;
 }
 
-void init_map(void *level_data) {
-	map_data.level_data = level_data;
-	map_data.next_row = level_data;
+void init_map() {
 	map_data.background_y = SCROLL_CHAR_H - 2;
 	map_data.lines_before_next = 0;
 	map_data.scroll_y = 0;

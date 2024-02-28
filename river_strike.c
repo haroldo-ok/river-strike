@@ -24,10 +24,13 @@
 #define PLAYER_DEATH_DELAY (2)
 #define PLAYER_CRASHING_COUNTDOWN (60)
 
+#define SCORE_TILE (192)
+
 actor player;
 actor shot;
 
 score_display score;
+score_display life;
 
 struct ply_ctl {
 	char crashing_countdown;
@@ -191,6 +194,16 @@ void draw_collision() {
 	}
 }
 
+void init_life_counter() {
+	init_score_display(&life, 26, PLAYER_BOTTOM - 30, SCORE_TILE);
+	update_score_display(&life, 3);
+}
+
+void draw_life_counter() {
+	SMS_addSprite(16, PLAYER_BOTTOM - 32, 212);	
+	draw_score_display(&life);
+}
+
 void title_screen() {
 	PSGStop();
 	PSGSFXStop();
@@ -252,7 +265,8 @@ void gameplay_loop() {
 	
 	init_enemies();
 	init_fuel_gauge();
-	init_score_display(&score, 16, PLAYER_BOTTOM + 2, 192);
+	init_score_display(&score, 16, PLAYER_BOTTOM + 2, SCORE_TILE);
+	init_life_counter();
 	
 	engine_sound_countdown = 0;
 	
@@ -287,8 +301,10 @@ void gameplay_loop() {
 		draw_player();
 		draw_enemies();
 		draw_shot();
+		
 		draw_fuel_gauge();
 		draw_score_display(&score);
+		draw_life_counter();
 		
 		SMS_finalizeSprites();
 		SMS_waitForVBlank();

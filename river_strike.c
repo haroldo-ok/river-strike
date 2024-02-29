@@ -37,6 +37,7 @@ struct ply_ctl {
 	char death_delay;
 	fixed speed, displacement, prev_speed;
 	char was_refuelling;
+	int level_number;
 } ply_ctl;
 
 char frames_elapsed;
@@ -147,9 +148,12 @@ void check_shot_enemy_collision() {
 		shot.active = 0;
 		
 		increment_score_display(&score, 5);
-
+		
 		PSGSFXPlay(explosion_psg, SFX_CHANNELS2AND3);
 		engine_sound_countdown = 32;
+		
+		// Destroyed a bridge: update level counter
+		if (enm->type == ENEMY_TILE_BRIDGE) ply_ctl.level_number = get_level_number();
 	}
 }
 
@@ -234,8 +238,6 @@ void title_screen() {
 }
 
 void gameplay_loop() {	
-	srand(1234);
-
 	SMS_displayOff();
 
 	SMS_useFirstHalfTilesforSprites(1);
@@ -246,17 +248,23 @@ void gameplay_loop() {
 	SMS_loadPSGaidencompressedTiles(tileset_tiles_psgcompr, 256);
 	load_standard_palettes();
 	
-	init_map(0);
-	draw_map_screen();
-
 	SMS_setLineInterruptHandler(&interrupt_handler);
 	SMS_setLineCounter(180);
 	SMS_enableLineInterrupt();
 
 	SMS_displayOn();
 
+	ply_ctl.level_number = 1;
 	init_life_counter();
+	
 	while (life.value) {
+		SMS_displayOff();
+
+		init_map(ply_ctl.level_number);
+		draw_map_screen();
+
+		SMS_displayOn();
+
 		init_actor(&player, 116, PLAYER_BOTTOM - 16, 2, 1, PLAYER_NEUTRAL_TILE, 1);
 		player.animation_delay = 20;
 		ply_ctl.crashing_countdown = 0;
@@ -336,7 +344,7 @@ void main() {
 }
 
 SMS_EMBED_SEGA_ROM_HEADER(9999,0); // code 9999 hopefully free, here this means 'homebrew'
-SMS_EMBED_SDSC_HEADER(0,6, 2024,2,24, "Haroldo-OK\\2024", "River Strike (Initial prototype)",
+SMS_EMBED_SDSC_HEADER(0,7, 2024,2,28, "Haroldo-OK\\2024", "River Strike (Initial prototype)",
   "A River Raid Clone.\n"
   "Originally made for the Minigame a Month - JANUARY 2024 - Water - https://itch.io/jam/minigame-a-month-january-2024\n"
   "Vastly improved for the SMS Power Coding Competition 2024 - https://www.smspower.org/forums/19973-Competitions2024\n"

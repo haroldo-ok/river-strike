@@ -23,8 +23,8 @@ typedef struct river_stream {
 } river_stream;
 
 struct map_data {
-	char *level_data;
-	char *next_row;
+	int level_number;
+	
 	char background_y;
 	char lines_before_next;
 	char scroll_y;
@@ -82,15 +82,16 @@ actor* find_colliding_enemy(actor *other) {
 	return 0;
 }
 
-void init_map(void *level_data) {
-	map_data.level_data = level_data;
-	map_data.next_row = level_data;
+void init_map(int level_number) {
+	srand(level_number);
+	map_data.level_number = level_number;
+
 	map_data.background_y = SCROLL_CHAR_H - 2;
 	map_data.lines_before_next = 0;
 	map_data.scroll_y = 0;
 	
 	map_data.rows_for_level = LEVEL_LENGTH;
-	
+
 	map_data.stream1.x = BRIDGE_LEFT;
 	map_data.stream1.w = STREAM_MIN_W;
 	map_data.stream1.bridge_done = 0;
@@ -253,6 +254,9 @@ void generate_map_row(char *buffer) {
 		}
 
 		map_data.rows_for_level = LEVEL_LENGTH;	
+		
+		map_data.level_number++;
+		srand(map_data.level_number);
 	}
 	
 	prev = buffer;
@@ -324,12 +328,6 @@ void draw_map_row() {
 		}
 	}
 	
-	//map_data.next_row += 16;
-	if (*map_data.next_row == 0xFF) {
-		// Reached the end of the map; reset
-		map_data.next_row = map_data.level_data;
-	}
-	
 	if (map_data.background_y) {
 		map_data.background_y -= 2;
 	} else {
@@ -362,4 +360,8 @@ void draw_map() {
 	}
 
 	scroll_enemies();
+}
+
+int get_level_number() {
+	return map_data.level_number;
 }

@@ -7,11 +7,12 @@
 #define ENEMY_TILE_FUEL (20)
 #define ENEMY_TILE_BRIDGE (86)
 
-void init_map(void *level_data);
+void init_map(int level_number);
 void draw_map_screen();
 void draw_map();
 
 void get_margins(char *left, char *right, char x, char y);
+extern int get_level_number();
 
 void move_enemies();
 void draw_enemies();

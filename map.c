@@ -13,7 +13,7 @@
 #define TILE_LAND (17)
 #define TILE_BRIDGE (5)
 
-#define LEVEL_LENGTH (16)
+#define LEVEL_LENGTH (128)
 #define BRIDGE_LEFT (7)
 #define BRIDGE_WIDTH (STREAM_MIN_W)
 
@@ -23,8 +23,8 @@ typedef struct river_stream {
 } river_stream;
 
 struct map_data {
-	char *level_data;
-	char *next_row;
+	int level_number;
+	
 	char background_y;
 	char lines_before_next;
 	char scroll_y;
@@ -82,15 +82,16 @@ actor* find_colliding_enemy(actor *other) {
 	return 0;
 }
 
-void init_map(void *level_data) {
-	map_data.level_data = level_data;
-	map_data.next_row = level_data;
+void init_map(int level_number) {
+	srand(level_number);
+	map_data.level_number = level_number;
+
 	map_data.background_y = SCROLL_CHAR_H - 2;
 	map_data.lines_before_next = 0;
 	map_data.scroll_y = 0;
 	
 	map_data.rows_for_level = LEVEL_LENGTH;
-	
+
 	map_data.stream1.x = BRIDGE_LEFT;
 	map_data.stream1.w = STREAM_MIN_W;
 	map_data.stream1.bridge_done = 0;
@@ -193,21 +194,25 @@ void update_river_stream(char *buffer, river_stream *stream) {
 	} else {
 		// Level is ending: create space for the bridge.
 		
-		stream->bridge_done = 1;
+		stream->bridge_done = stream->x == BRIDGE_LEFT && stream->w == STREAM_MIN_W;
 		
 		// Gradually shift the stream towards the bridge
-		if (stream->x < BRIDGE_LEFT) {
-			stream->x++;
-			stream->bridge_done = 0;
-		} else if (stream->x > BRIDGE_LEFT) {
-			stream->x--;
-			stream->bridge_done = 0;
+		if (rand() & 0x80) {
+			if (stream->x < BRIDGE_LEFT) {
+				stream->x++;
+				stream->bridge_done = 0;
+			} else if (stream->x > BRIDGE_LEFT) {
+				stream->x--;
+				stream->bridge_done = 0;
+			}
 		}
 		
 		// Gradually narrow the stream to match the bridge
-		if (stream->w > STREAM_MIN_W) {
-			stream->w--;
-			stream->bridge_done = 0;
+		if (rand() & 0x80) {
+			if (stream->w > STREAM_MIN_W) {
+				stream->w--;
+				stream->bridge_done = 0;
+			}
 		}
 	}
 }
@@ -249,6 +254,9 @@ void generate_map_row(char *buffer) {
 		}
 
 		map_data.rows_for_level = LEVEL_LENGTH;	
+		
+		map_data.level_number++;
+		srand(map_data.level_number);
 	}
 	
 	prev = buffer;
@@ -320,12 +328,6 @@ void draw_map_row() {
 		}
 	}
 	
-	//map_data.next_row += 16;
-	if (*map_data.next_row == 0xFF) {
-		// Reached the end of the map; reset
-		map_data.next_row = map_data.level_data;
-	}
-	
 	if (map_data.background_y) {
 		map_data.background_y -= 2;
 	} else {
@@ -358,4 +360,8 @@ void draw_map() {
 	}
 
 	scroll_enemies();
+}
+
+int get_level_number() {
+	return map_data.level_number;
 }

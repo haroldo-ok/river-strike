@@ -30,6 +30,7 @@ struct map_data {
 	char scroll_y;
 	
 	char rows_for_level;
+	char rows_for_bridge;
 	
 	river_stream stream1, stream2;
 	char circular_buffer[SCROLL_CHAR_H][SCREEN_CHAR_W];
@@ -91,6 +92,7 @@ void init_map(int level_number) {
 	map_data.scroll_y = 0;
 	
 	map_data.rows_for_level = LEVEL_LENGTH;
+	map_data.rows_for_bridge = 8;
 
 	map_data.stream1.x = BRIDGE_LEFT;
 	map_data.stream1.w = STREAM_MIN_W;
@@ -197,7 +199,7 @@ void update_river_stream(char *buffer, river_stream *stream) {
 		stream->bridge_done = stream->x == BRIDGE_LEFT && stream->w == STREAM_MIN_W;
 		
 		// Gradually shift the stream towards the bridge
-		if (rand() & 0x80) {
+		if (!(map_data.rows_for_bridge & 0x3)) {
 			if (stream->x < BRIDGE_LEFT) {
 				stream->x++;
 				stream->bridge_done = 0;
@@ -208,12 +210,13 @@ void update_river_stream(char *buffer, river_stream *stream) {
 		}
 		
 		// Gradually narrow the stream to match the bridge
-		if (rand() & 0x80) {
+		if (!(map_data.rows_for_bridge & 0x3)) {
 			if (stream->w > STREAM_MIN_W) {
 				stream->w--;
 				stream->bridge_done = 0;
 			}
 		}
+		
 	}
 }
 
@@ -232,7 +235,11 @@ void generate_map_row(char *buffer) {
 		d++;
 	}
 	
-	if (map_data.rows_for_level) map_data.rows_for_level--;	
+	if (map_data.rows_for_level) {
+		map_data.rows_for_level--;	
+	} else {
+		map_data.rows_for_bridge--;
+	}
 	
 	update_river_stream(buffer, &map_data.stream1);
 	update_river_stream(buffer, &map_data.stream2);

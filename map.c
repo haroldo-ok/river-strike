@@ -30,6 +30,7 @@ struct map_data {
 	char scroll_y;
 	
 	char rows_for_level;
+	char rows_before_bridge;
 	char rows_for_bridge;
 	
 	river_stream stream1, stream2;
@@ -92,6 +93,7 @@ void init_map(int level_number) {
 	map_data.scroll_y = 0;
 	
 	map_data.rows_for_level = LEVEL_LENGTH;
+	map_data.rows_before_bridge = 8;
 	map_data.rows_for_bridge = 8;
 
 	map_data.stream1.x = BRIDGE_LEFT;
@@ -208,15 +210,27 @@ void update_river_stream(char *buffer, river_stream *stream) {
 				stream->bridge_done = 0;
 			}
 		}
-		
-		// Gradually narrow the stream to match the bridge
-		if (!(map_data.rows_for_bridge & 0x3)) {
-			if (stream->w > STREAM_MIN_W) {
-				stream->w--;
-				stream->bridge_done = 0;
+
+		if (map_data.rows_before_bridge) {
+			// Gradually widen or narrow the stream to be slightly bigger than the bridge
+			if (!(map_data.rows_for_bridge & 0x3)) {
+				if (stream->w > STREAM_MIN_W + 2) {
+					stream->w--;
+					stream->bridge_done = 0;
+				} else if (stream->w < STREAM_MIN_W + 2) {
+					stream->w++;
+					stream->bridge_done = 0;
+				}
+			}
+		} else {
+			// Gradually narrow the stream to match the bridge
+			if (!(map_data.rows_for_bridge & 0x3)) {
+				if (stream->w > STREAM_MIN_W) {
+					stream->w--;
+					stream->bridge_done = 0;
+				}
 			}
 		}
-		
 	}
 }
 
@@ -238,6 +252,7 @@ void generate_map_row(char *buffer) {
 	if (map_data.rows_for_level) {
 		map_data.rows_for_level--;	
 	} else {
+		if (map_data.rows_before_bridge) map_data.rows_before_bridge--;
 		map_data.rows_for_bridge--;
 	}
 	

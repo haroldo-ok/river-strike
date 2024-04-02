@@ -272,11 +272,12 @@ void generate_map_row(char *buffer) {
 		next++;
 	}
 	
-	if (!(rand() & 0x07)) {
+	char enm_rand = rand();
+	if (!(enm_rand & 0x07)) {
 		actor *enm = find_free_enemy();
 		
 		if (enm) {
-			int enm_x = map_data.stream1.x << 4;
+			int enm_x = ((enm_rand & 0x80) ? map_data.stream1.x : map_data.stream2.x) << 4;
 			switch (rand() & 0x03) {
 			case 0:
 				init_actor(enm, enm_x, 0, 4, 1, ENEMY_TILE_SHIP, 1);

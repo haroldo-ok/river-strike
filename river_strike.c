@@ -256,6 +256,7 @@ void gameplay_loop() {
 
 	ply_ctl.level_number = 1;
 	init_life_counter();
+	init_score_display(&score, 16, PLAYER_BOTTOM + 2, SCORE_TILE);
 	
 	while (life.value) {
 		SMS_displayOff();
@@ -279,7 +280,6 @@ void gameplay_loop() {
 		
 		init_enemies();
 		init_fuel_gauge();
-		init_score_display(&score, 16, PLAYER_BOTTOM + 2, SCORE_TILE);
 		
 		engine_sound_countdown = 0;
 		

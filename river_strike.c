@@ -225,9 +225,9 @@ void title_screen() {
 	SMS_setBGScrollX(0);
 	SMS_setBGScrollY(0);
 
-	SMS_loadPSGaidencompressedTiles(title_tiles_psgcompr, 0);
-	SMS_loadBGPalette(title_palette_bin);
-	SMS_loadTileMapArea(0, 0, title_tilemap_bin, SCREEN_CHAR_W, SCREEN_CHAR_H);
+	SMS_loadPSGaidencompressedTiles(title_logo_tiles_psgcompr, 0);
+	SMS_loadBGPalette(title_logo_palette_bin);
+	SMS_loadTileMapArea(0, 0, title_logo_tilemap_bin, SCREEN_CHAR_W, 7);
 
 	clear_sprites();
 

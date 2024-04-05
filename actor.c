@@ -6,17 +6,13 @@
 #include "actor.h"
 #include "data.h"
 
-void draw_meta_sprite(int x, int y, int w, int h, unsigned char tile) {
-	static char i, j;
-	static int sx, sy;
-	static unsigned char st;
-	
-	sy = y;
-	for (i = h; i; i--) {
-		st = tile;
+void draw_meta_sprite(int x, int y, char w, char h, unsigned char tile) {
+	int sy = y;
+	for (char i = h; i; i--) {
+		char st = tile;
 		if (y >= 0 && y < SCREEN_H) {
-			sx = x;
-			for (j = w; j; j--) {
+			int sx = x;
+			for (char j = w; j; j--) {
 				if (sx >= 0 && sx < SCREEN_W) {
 					SMS_addSprite(sx, sy, st);
 				}
@@ -94,32 +90,26 @@ void move_actor(actor *_act) {
 }
 
 void draw_actor(actor *act) {
-	static actor *_act;
-	static unsigned char frame_tile;
-	static unsigned char frame;
-	
 	if (!act->active) {
 		return;
 	}
 	
-	_act = act;
-	
-	frame_tile = _act->base_tile + _act->frame;
-	if (!_act->facing_left) {
-		frame_tile += _act->frame_max;
+	char frame_tile = act->base_tile + act->frame;
+	if (!act->facing_left) {
+		frame_tile += act->frame_max;
 	}
 	
-	draw_meta_sprite(_act->x, _act->y, _act->char_w, _act->char_h, frame_tile);	
+	draw_meta_sprite(act->x, act->y, act->char_w, act->char_h, frame_tile);	
 
-	if (_act->animation_delay) {
-		_act->animation_delay--;
+	if (act->animation_delay) {
+		act->animation_delay--;
 	} else {
-		frame = _act->frame;		
-		frame += _act->frame_increment;
-		if (frame >= _act->frame_max) frame = 0;		
-		_act->frame = frame;
+		char frame = act->frame;		
+		frame += act->frame_increment;
+		if (frame >= act->frame_max) frame = 0;		
+		act->frame = frame;
 
-		_act->animation_delay = _act->animation_delay_max;
+		act->animation_delay = act->animation_delay_max;
 	}
 }
 

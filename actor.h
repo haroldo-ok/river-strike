@@ -64,7 +64,7 @@ typedef struct actor {
 	char col_x, col_y, col_w, col_h;
 } actor;
 
-void draw_meta_sprite(int x, int y, int w, int h, unsigned char tile);
+void draw_meta_sprite(int x, int y, char w, char h, unsigned char tile);
 void init_actor(actor *act, int x, int y, int char_w, int char_h, unsigned char base_tile, unsigned char frame_count);
 void move_actor(actor *act);
 void draw_actor(actor *act);

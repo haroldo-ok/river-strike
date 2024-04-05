@@ -17,7 +17,7 @@
 #define BRIDGE_LEFT (7)
 #define BRIDGE_WIDTH (STREAM_MIN_W)
 
-#define ENEMY_SPAWN_CHANCE (0x1F)
+#define ENEMY_SPAWN_CHANCE (0x0F)
 
 typedef struct river_stream {
 	char x, w;

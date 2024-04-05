@@ -17,6 +17,8 @@
 #define BRIDGE_LEFT (7)
 #define BRIDGE_WIDTH (STREAM_MIN_W)
 
+#define ENEMY_SPAWN_CHANCE (0x1F)
+
 typedef struct river_stream {
 	char x, w;
 	char bridge_done;
@@ -295,7 +297,7 @@ void generate_map_row(char *buffer) {
 	}
 	
 	char enm_rand = rand();
-	if (!(enm_rand & 0x07)) {
+	if ((enm_rand & 0x3F) < ENEMY_SPAWN_CHANCE) {
 		actor *enm = find_free_enemy();
 		
 		if (enm) {
